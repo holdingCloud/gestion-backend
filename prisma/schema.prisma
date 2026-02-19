@@ -1,0 +1,135 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum typePosition {
+  ADMINISTRADOR
+  REPARTIDOR
+  COMUN
+}
+
+model Users {
+  id       Int      @id @default(autoincrement())
+  fullName String   @db.VarChar(200)
+  email    String   @unique @db.VarChar(30)
+  password String   @db.VarChar(150)
+  imagen   String   @db.VarChar(150)
+  rol      Roles     @relation(fields: [rolesId], references: [id])
+  rolesId  Int
+  isActive Boolean @default(true)
+  isLoged  Boolean @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+}
+
+
+model Roles {
+  id        Int      @id @default(autoincrement())
+  type      typePosition @unique
+  user      Users[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Products {
+  id                 Int                 @id @default(autoincrement())
+  name               String              @db.VarChar(25)
+  description        String              @db.VarChar(50)
+  quantity           Int
+  available          Boolean             @default(true)
+  img                String              @db.VarChar(50)
+  code               String              @db.VarChar(50)
+  detailsSalesSheets detailsSalesSheet[]
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([available])
+}
+
+model Clients {
+  id                 Int                 @id @default(autoincrement())
+  fullname           String              @db.VarChar(150)
+  city               String              @db.VarChar(50)
+  address            String              @db.VarChar(100)
+  zone               String              @db.VarChar(100)
+  phone              String              @db.VarChar(15)
+  email              String              @db.VarChar(100)
+  detailsSalesSheets detailsSalesSheet[]
+  available          Boolean             @default(true)
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
+
+  @@index([available])
+}
+
+model Employees {
+  id          Int           @id @default(autoincrement())
+  rut         String        @db.VarChar(20)
+  fullname    String        @db.VarChar(150)
+  email       String        @db.VarChar(100)
+  salary      Int
+  hireDate    String        @db.VarChar(20)
+  city        String        @db.VarChar(50)
+  address     String        @db.VarChar(100)
+  available   Boolean       @default(true)
+  type        typePosition  @default(COMUN)
+  salesSheets salesSheets[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([available])
+}
+
+model Bills {
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(50)
+  details     BillDetails[]
+  salesSheets salesSheets[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model BillDetails {
+  id        Int      @id @default(autoincrement())
+  amount    Int
+  date      DateTime
+  bill      Bills    @relation(fields: [billsId], references: [id])
+  billsId   Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model salesSheets {
+  id                Int                 @id @default(autoincrement())
+  employee          Employees           @relation(fields: [employeeId], references: [id])
+  employeeId        Int
+  date              DateTime
+  description       String              @db.LongText
+  bill              Bills               @relation(fields: [billId], references: [id])
+  billId            Int
+  detailsSalesSheet detailsSalesSheet[]
+}
+
+model detailsSalesSheet {
+  id           Int         @id @default(autoincrement())
+  client       Clients     @relation(fields: [clientsId], references: [id])
+  clientsId    Int
+  product      Products    @relation(fields: [productsId], references: [id])
+  productsId   Int
+  quantity     Int
+  discount     Float
+  salesSheet   salesSheets @relation(fields: [salesSheetId], references: [id])
+  salesSheetId Int
+}
