@@ -1,0 +1,118 @@
+Enum typePosition {
+  ADMINISTRADOR
+  REPARTIDOR
+  COMUN
+}
+
+Table Users {
+  id int [pk, increment]
+  fullName varchar(200)
+  email varchar(30) [unique]
+  password varchar(150)
+  imagen varchar(150)
+  rolesId int
+  isActive boolean [default: true]
+  isLoged boolean [default: false]
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table Roles {
+  id int [pk, increment]
+  type typePosition [unique]
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table Products {
+  id int [pk, increment]
+  name varchar(25)
+  description varchar(50)
+  quantity int
+  available boolean [default: true]
+  img varchar(50)
+  code varchar(50)
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    available
+  }
+}
+
+Table Clients {
+  id int [pk, increment]
+  fullname varchar(150)
+  city varchar(50)
+  address varchar(100)
+  zone varchar(100)
+  phone varchar(15)
+  email varchar(100)
+  available boolean [default: true]
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    available
+  }
+}
+
+Table Employees {
+  id int [pk, increment]
+  rut varchar(20)
+  fullname varchar(150)
+  email varchar(100)
+  salary int
+  hireDate varchar(20)
+  city varchar(50)
+  address varchar(100)
+  available boolean [default: true]
+  type typePosition [default: COMUN]
+  createdAt datetime
+  updatedAt datetime
+
+  indexes {
+    available
+  }
+}
+
+Table Bills {
+  id int [pk, increment]
+  name varchar(50)
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table BillDetails {
+  id int [pk, increment]
+  amount int
+  date datetime
+  billsId int
+  createdAt datetime
+  updatedAt datetime
+}
+
+Table salesSheets {
+  id int [pk, increment]
+  employeeId int
+  date datetime
+  description text
+  billId int
+}
+
+Table detailsSalesSheet {
+  id int [pk, increment]
+  clientsId int
+  productsId int
+  quantity int
+  discount float
+  salesSheetId int
+}
+
+Ref: Users.rolesId > Roles.id
+Ref: BillDetails.billsId > Bills.id
+Ref: salesSheets.employeeId > Employees.id
+Ref: salesSheets.billId > Bills.id
+Ref: detailsSalesSheet.clientsId > Clients.id
+Ref: detailsSalesSheet.productsId > Products.id
+Ref: detailsSalesSheet.salesSheetId > salesSheets.id

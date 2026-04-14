@@ -9,6 +9,9 @@ import { ProductModule } from './product/product.module';
 import { SalesSheetModule } from './sales-sheet/sales-sheet.module';
 import { UserModule } from './user/user.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { BillModule } from './bill/bill.module';
+import { BillDetailsModule } from './bill-details/bill-details.module';
+import { DetailsSalesSheetModule } from './details-sales-sheet/details-sales-sheet.module';
 
 
 
@@ -24,7 +27,10 @@ import { PrismaModule } from './prisma/prisma.module';
     FileUploadModule, 
     ImagesModule, 
     ProductModule, 
+    BillModule,
+    BillDetailsModule,
     SalesSheetModule, 
+    DetailsSalesSheetModule,
     UserModule
   ],
   controllers: [],

@@ -9,7 +9,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -116,7 +116,7 @@ model salesSheets {
   employee          Employees           @relation(fields: [employeeId], references: [id])
   employeeId        Int
   date              DateTime
-  description       String              @db.LongText
+  description       String              @db.Text
   bill              Bills               @relation(fields: [billId], references: [id])
   billId            Int
   detailsSalesSheet detailsSalesSheet[]

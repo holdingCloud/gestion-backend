@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "Gestion Backend - Billing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Requests for Bills and BillDetails endpoints"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "billId",
+      "value": "1"
+    },
+    {
+      "key": "billDetailsId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Bills",
+      "item": [
+        {
+          "name": "Create Bill",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invoice January\"\n}"
+            },
+            "url": "{{baseUrl}}/bill"
+          }
+        },
+        {
+          "name": "Get Bills (Paginated)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bill?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Bill By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bill/{{billId}}"
+          }
+        },
+        {
+          "name": "Update Bill",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Invoice January Updated\"\n}"
+            },
+            "url": "{{baseUrl}}/bill/{{billId}}"
+          }
+        },
+        {
+          "name": "Delete Bill",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/bill/{{billId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Bill Details",
+      "item": [
+        {
+          "name": "Create Bill Details",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 150000,\n  \"date\": \"2026-02-26T10:00:00.000Z\",\n  \"billsId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/bill-details"
+          }
+        },
+        {
+          "name": "Get Bill Details (Paginated)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bill-details?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Bill Details By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/bill-details/{{billDetailsId}}"
+          }
+        },
+        {
+          "name": "Update Bill Details",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"amount\": 170000\n}"
+            },
+            "url": "{{baseUrl}}/bill-details/{{billDetailsId}}"
+          }
+        },
+        {
+          "name": "Delete Bill Details",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/bill-details/{{billDetailsId}}"
+          }
+        }
+      ]
+    }
+  ]
+}

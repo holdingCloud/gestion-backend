@@ -1,4 +1,22 @@
 services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gestion_backend
+    restart: always
+    environment:
+      PORT: 3000
+      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_me}
+    ports:
+      - 3000:3000
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - gsysnet
+
   mysql:
     image: mysql:latest
     restart: always

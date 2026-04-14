@@ -1,0 +1,145 @@
+{
+  "info": {
+    "name": "Gestion Backend - Sales",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Requests for SalesSheets and DetailsSalesSheet endpoints"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000/api"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "salesSheetId",
+      "value": "1"
+    },
+    {
+      "key": "detailsSalesSheetId",
+      "value": "1"
+    }
+  ],
+  "item": [
+    {
+      "name": "Sales Sheet",
+      "item": [
+        {
+          "name": "Create Sales Sheet",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"employeeId\": 1,\n  \"date\": \"2026-02-26T10:00:00.000Z\",\n  \"description\": \"Daily sales sheet\",\n  \"billId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/sales-sheet"
+          }
+        },
+        {
+          "name": "Get Sales Sheets (Paginated)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sales-sheet?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Sales Sheet By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/sales-sheet/{{salesSheetId}}"
+          }
+        },
+        {
+          "name": "Update Sales Sheet",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"description\": \"Daily sales sheet updated\"\n}"
+            },
+            "url": "{{baseUrl}}/sales-sheet/{{salesSheetId}}"
+          }
+        },
+        {
+          "name": "Delete Sales Sheet",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/sales-sheet/{{salesSheetId}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Details Sales Sheet",
+      "item": [
+        {
+          "name": "Create Details Sales Sheet",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"clientsId\": 1,\n  \"productsId\": 1,\n  \"quantity\": 2,\n  \"discount\": 5,\n  \"salesSheetId\": 1\n}"
+            },
+            "url": "{{baseUrl}}/details-sales-sheet"
+          }
+        },
+        {
+          "name": "Get Details Sales Sheets (Paginated)",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/details-sales-sheet?page=1&limit=10"
+          }
+        },
+        {
+          "name": "Get Details Sales Sheet By Id",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/details-sales-sheet/{{detailsSalesSheetId}}"
+          }
+        },
+        {
+          "name": "Update Details Sales Sheet",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"quantity\": 3,\n  \"discount\": 3\n}"
+            },
+            "url": "{{baseUrl}}/details-sales-sheet/{{detailsSalesSheetId}}"
+          }
+        },
+        {
+          "name": "Delete Details Sales Sheet",
+          "request": {
+            "method": "DELETE",
+            "url": "{{baseUrl}}/details-sales-sheet/{{detailsSalesSheetId}}"
+          }
+        }
+      ]
+    }
+  ]
+}
