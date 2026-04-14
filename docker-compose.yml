@@ -7,29 +7,35 @@ services:
     restart: always
     environment:
       PORT: 3000
-      DATABASE_URL: mysql://root:${MYSQL_ROOT_PASSWORD}@mysql:3306/${MYSQL_DATABASE}
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change_me}
     ports:
       - 3000:3000
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/healthcheck', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
     depends_on:
-      mysql:
+      postgres:
         condition: service_healthy
     networks:
       - gsysnet
 
-  mysql:
-    image: mysql:latest
+  postgres:
+    image: postgres:latest
     restart: always
-    container_name: mysql_DB
+    container_name: postgres_DB
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DATABASE}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     volumes:
-      - ./mysql:/var/lib/mysql
+      - ./postgres:/var/lib/postgresql/data
     ports:
-      - 3306:3306
+      - 5432:5432
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping"]
+      test: ["CMD", "pg_isready", "-U", "postgres"]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -41,5 +47,5 @@ networks:
     driver: bridge
 
 volumes:
-  mysql:
+  postgres:
     external: false

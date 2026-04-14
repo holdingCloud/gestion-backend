@@ -12,6 +12,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { BillModule } from './bill/bill.module';
 import { BillDetailsModule } from './bill-details/bill-details.module';
 import { DetailsSalesSheetModule } from './details-sales-sheet/details-sales-sheet.module';
+import { HealthModule } from './health/health.module';
 
 
 
@@ -31,7 +32,8 @@ import { DetailsSalesSheetModule } from './details-sales-sheet/details-sales-she
     BillDetailsModule,
     SalesSheetModule, 
     DetailsSalesSheetModule,
-    UserModule
+    UserModule,
+    HealthModule,
   ],
   controllers: [],
   providers: [],
