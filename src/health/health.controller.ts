@@ -1,8 +1,10 @@
 import { Controller, Get } from '@nestjs/common';
 import { HealthCheck, HealthCheckService, PrismaHealthIndicator } from '@nestjs/terminus';
 import { PrismaService } from '../prisma/prisma.service';
+import { HealthControllerDocs, HealthCheckDocs, DatabaseHealthCheckDocs } from 'src/docs/swagger/health.docs';
 
 @Controller('healthcheck')
+@HealthControllerDocs()
 export class HealthController {
   constructor(
     private readonly health: HealthCheckService,
@@ -12,6 +14,7 @@ export class HealthController {
 
   @Get('database')
   @HealthCheck()
+  @DatabaseHealthCheckDocs()
   check() {
     return this.health.check([
       () => this.prismaHealth.pingCheck('database', this.prisma),
@@ -19,6 +22,7 @@ export class HealthController {
   }
 
   @Get()
+  @HealthCheckDocs()
   healthCheck(){
     return {status: 'ok',
     message: 'Health check successful',

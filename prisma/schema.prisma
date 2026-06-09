@@ -19,6 +19,25 @@ enum typePosition {
   COMUN
 }
 
+enum ContactStatus {
+  LLAMAR
+  CONTACTADO
+  VENCIDO
+}
+
+enum PurchaseStatus {
+  PENDIENTE
+  FINALIZADO
+  ANULADO
+}
+
+enum FrequencyStatus {
+  NUEVO
+  EN_PLAZO
+  POR_VENCER
+  VENCIDO
+}
+
 model Users {
   id       Int      @id @default(autoincrement())
   fullName String   @db.VarChar(200)
@@ -31,7 +50,6 @@ model Users {
   isLoged  Boolean @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
 }
 
 
@@ -44,34 +62,75 @@ model Roles {
 }
 
 model Products {
-  id                 Int                 @id @default(autoincrement())
-  name               String              @db.VarChar(25)
-  description        String              @db.VarChar(50)
-  quantity           Int
-  available          Boolean             @default(true)
-  img                String              @db.VarChar(50)
-  code               String              @db.VarChar(50)
-  detailsSalesSheets detailsSalesSheet[]
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                       Int                      @id @default(autoincrement())
+  name                     String                   @db.VarChar(25)
+  description              String                   @db.VarChar(50)
+  quantity                 Int
+  available                Boolean                  @default(true)
+  img                      String                   @db.VarChar(50)
+  code                     String                   @db.VarChar(50)
+  detailsSalesSheets       detailsSalesSheet[]
+  buysByClient             buyByClient[]
+  clientProductFrequencies ClientProductFrequency[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
 
   @@index([available])
 }
 
 model Clients {
-  id                 Int                 @id @default(autoincrement())
-  fullname           String              @db.VarChar(150)
-  city               String              @db.VarChar(50)
-  address            String              @db.VarChar(100)
-  zone               String              @db.VarChar(100)
-  phone              String              @db.VarChar(15)
-  email              String              @db.VarChar(100)
-  detailsSalesSheets detailsSalesSheet[]
-  available          Boolean             @default(true)
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                       Int                      @id @default(autoincrement())
+  fullname                 String                   @db.VarChar(150)
+  city                     String                   @db.VarChar(50)
+  address                  String                   @db.VarChar(100)
+  phone                    String                   @db.VarChar(15)
+  email                    String                   @db.VarChar(100)
+  detailsSalesSheets       detailsSalesSheet[]
+  buysByClient             buyByClient[]
+  clientProductFrequencies ClientProductFrequency[]
+  available                Boolean                  @default(true)
+  contactStatus            ContactStatus            @default(LLAMAR)
+  frequency                Int?
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
 
   @@index([available])
+}
+
+model buyByClient {
+  id             Int            @id @default(autoincrement())
+  client         Clients        @relation(fields: [clientsId], references: [id])
+  clientsId      Int
+  product        Products       @relation(fields: [productsId], references: [id])
+  productsId     Int
+  quantity       Int
+  unitPrice      Float
+  purchaseDate   DateTime?
+  purchaseStatus PurchaseStatus @default(PENDIENTE)
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([clientsId, productsId])
+  @@index([clientsId, createdAt])
+}
+
+model ClientProductFrequency {
+  id                      Int             @id @default(autoincrement())
+  client                  Clients         @relation(fields: [clientsId], references: [id])
+  clientsId               Int
+  product                 Products        @relation(fields: [productsId], references: [id])
+  productsId              Int
+  purchaseCount           Int             @default(0)
+  avgDaysBetweenPurchases Int?
+  lastPurchaseDate        DateTime?
+  actualPurchaseDate      DateTime?
+  nextEstimatedDate       DateTime?
+  status                  FrequencyStatus @default(NUEVO)
+  updatedAt               DateTime        @updatedAt
+
+  @@unique([clientsId, productsId])
+  @@index([nextEstimatedDate])
+  @@index([status])
 }
 
 model Employees {

@@ -53,17 +53,25 @@ export class UserRepository {
     }
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll({ page = 1, limit = 10, fullName, email }: { page?: number; limit?: number; fullName?: string; email?: string }) {
     try {
       const skip = (page - 1) * limit;
+      const where: any = { isActive: true };
+      if (fullName) {
+        where.fullName = { contains: fullName, mode: 'insensitive' };
+      }
+      if (email) {
+        where.email = { contains: email, mode: 'insensitive' };
+      }
+
       const [users, total] = await Promise.all([
         this.prisma.users.findMany({
-          where: { isActive: true },
+          where,
           include: { rol: true },
           skip,
           take: limit,
         }),
-        this.prisma.users.count({ where: { isActive: true } }),
+        this.prisma.users.count({ where }),
       ]);
       return { users, total };
     } catch (error) {

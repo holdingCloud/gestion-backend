@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, Logger } from '@nestjs/common';
 import { UserRepository } from './user.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -6,6 +6,7 @@ import { UserEntity } from './entities/user.entity';
 import { UserNotFoundException } from './exceptions';
 import * as bcrypt from 'bcrypt';
 import { PaginatedResponse } from 'src/common/responses/paginated.response';
+import { PaginationDto } from './dto/pagination.dto';
 
 @Injectable()
 export class UserService {
@@ -28,14 +29,17 @@ export class UserService {
         isLoged: users.isLoged ?? undefined,
       });
     } catch (error) {
-      this.logger.error(`Failed to create user: ${error.message}`, error.stack);
-      throw error;
+     if (error instanceof Error) {
+    throw new BadRequestException(error.message);
+  }
+  throw new BadRequestException('Invalid pagination parameters');
     }
   }
 
-  async findAll(page: number = 1, limit: number = 10): Promise<PaginatedResponse<UserEntity>> {
+  async findAll(pagination: PaginationDto): Promise<PaginatedResponse<UserEntity>> {
+    const { page = 1, limit = 10, fullName, email } = pagination;
     try {
-      const { users, total } = await this.repo.findAll(page, limit);
+      const { users, total } = await this.repo.findAll({ page, limit, fullName, email });
       const mappedUsers = users.map(
         ({password, ...u}) =>
           new UserEntity({
@@ -47,8 +51,10 @@ export class UserService {
       );
       return new PaginatedResponse(mappedUsers, total, page, limit);
     } catch (error) {
-      this.logger.error(`Failed to fetch users: ${error.message}`, error.stack);
-      throw error;
+      if (error instanceof Error) {
+        throw new BadRequestException(error.message);
+      }
+      throw new BadRequestException('Invalid pagination parameters');
     }
   }
 
@@ -75,7 +81,7 @@ export class UserService {
         `Failed to fetch user with id ${id}: ${error.message}`,
         error.stack,
       );
-      throw error;
+      throw new BadRequestException('Invalid pagination parameters');
     }
   }
 
@@ -86,11 +92,11 @@ export class UserService {
       if (!existingUser) {
         throw new UserNotFoundException(id);
       }
-       const hashedPassword = await bcrypt.hash(dto.password, 10);
+     
       const user = await this.repo.update({
-        ...dto,
-        password: hashedPassword,
+        ...dto
       });
+
       this.logger.log(`User updated successfully with id: ${id}`);
       return new UserEntity({
         ...user,

@@ -17,6 +17,10 @@ export class ParsePaginationPipe implements PipeTransform {
       );
     }
 
-    return { page, limit };
+    return { 
+      ...value,
+      page, 
+      limit 
+    };
   }
 }

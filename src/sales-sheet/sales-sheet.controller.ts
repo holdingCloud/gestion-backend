@@ -20,15 +20,25 @@ import { PrismaExceptionFilter, HttpExceptionFilter } from './filters';
 import { ParsePaginationPipe } from 'src/common/pipes/parse-pagination.pipe';
 import { CreateSalesSheetDto } from './dto/create-sales-sheet.dto';
 import { UpdateSalesSheetDto } from './dto/update-sales-sheet.dto';
+import {
+  SalesSheetControllerDocs,
+  CreateSalesSheetDocs,
+  FindAllSalesSheetsDocs,
+  FindOneSalesSheetDocs,
+  UpdateSalesSheetDocs,
+  RemoveSalesSheetDocs,
+} from 'src/docs/swagger/sales-sheet.docs';
 
 @Controller('sales-sheet')
 @UseFilters(PrismaExceptionFilter, HttpExceptionFilter)
 @UseGuards(JwtAuthGuard)
+@SalesSheetControllerDocs()
 export class SalesSheetController {
   constructor(private readonly salesSheetService: SalesSheetService) {}
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
+  @CreateSalesSheetDocs()
   create(@Body() createSalesSheetDto: CreateSalesSheetDto) {
     return this.salesSheetService.create(createSalesSheetDto);
   }
@@ -36,18 +46,21 @@ export class SalesSheetController {
   @Get()
   @HttpCode(HttpStatus.OK)
   @UsePipes(ParsePaginationPipe)
+  @FindAllSalesSheetsDocs()
   findAll(@Query() pagination: any) {
     return this.salesSheetService.findAll(pagination.page, pagination.limit);
   }
 
   @Get(':id')
   @HttpCode(HttpStatus.OK)
+  @FindOneSalesSheetDocs()
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.salesSheetService.findOne(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.OK)
+  @UpdateSalesSheetDocs()
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateSalesSheetDto: UpdateSalesSheetDto,
@@ -58,6 +71,7 @@ export class SalesSheetController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.OK)
+  @RemoveSalesSheetDocs()
   remove(@Param('id', ParseIntPipe) id: number) {
     return this.salesSheetService.remove(id);
   }

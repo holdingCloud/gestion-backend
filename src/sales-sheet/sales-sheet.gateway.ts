@@ -28,20 +28,19 @@ import { WsAddSalesSheetDetailDto } from './dto/ws-add-sales-sheet-detail.dto';
     transform: true,
   }),
 )
+
 export class SalesSheetGateway implements OnGatewayConnection, OnGatewayDisconnect {
+ 
   @WebSocketServer()
-  server: Server;
+  server!: Server;
 
   private readonly logger = new Logger(SalesSheetGateway.name);
   private readonly roomDetailsBuffer = new Map<number, WsSalesSheetDetailDto[]>();
-
-  constructor(
-    private readonly salesSheetService: SalesSheetService,
-    private readonly detailsSalesSheetService: DetailsSalesSheetService,
-  ) {}
+  // Rooms activos en memoria
+  private readonly activeRooms = new Set<string>();
 
   handleConnection(client: Socket) {
-    this.logger.log(`Client connected: ${client.id}`);
+    this.logger.log(`New client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
@@ -49,118 +48,67 @@ export class SalesSheetGateway implements OnGatewayConnection, OnGatewayDisconne
   }
 
   @SubscribeMessage('join-room')
-  async joinRoom(
-    @ConnectedSocket() client: Socket,
-    @MessageBody() body: WsSalesSheetRoomDto,
-  ) {
-  
-    await this.salesSheetService.findOne(body.salesSheetId);
+  handleJoinRoom(@ConnectedSocket() client: Socket, @MessageBody() data: WsSalesSheetRoomDto) {
+    const roomName = `sales-sheet-${data.salesSheetId}`;
 
-    const roomName = this.getRoomName(body.salesSheetId);
-    await client.join(roomName);
+  // Esto crea el room si no existe y une al cliente
+  client.join(roomName);
+    this.activeRooms.add(roomName);
 
-    const bufferedDetails = this.roomDetailsBuffer.get(body.salesSheetId) ?? [];
+    this.logger.log(`Client ${client.id} joined room: ${roomName}`);
 
-    this.logger.log(`Client ${client.id} joined room ${roomName}. Buffered details count: ${bufferedDetails.length}`);
+    const bufferedDetails = this.roomDetailsBuffer.get(data.salesSheetId) ?? [];
 
-    return {
-      dato: 'este-dato-es-para-el-join-room',
-      event: 'room-joined',
-      salesSheetId: body.salesSheetId,
-      bufferedDetails,
-    };
+  // Emite solo a los que están en ese room
+  this.server.to(roomName).emit('room-joined', {
+    salesSheetId: data.salesSheetId,
+    message: 'Te uniste al room correctamente',
+    bufferedDetails,
+  });
   }
 
   @SubscribeMessage('add-detail')
-  async addDetailToRoom(
-    @MessageBody() body: WsAddSalesSheetDetailDto,
-  ) {
-    await this.salesSheetService.findOne(body.salesSheetId);
+  handleAddDetail(@MessageBody() data: WsAddSalesSheetDetailDto) {
+    const roomName = `sales-sheet-${data.salesSheetId}`;
+    const roomExists = this.activeRooms.has(roomName);
 
-    const existingBuffer = this.roomDetailsBuffer.get(body.salesSheetId) ?? [];
+    if (!roomExists) {
+      return { event: 'error', message: `El room ${roomName} no existe. Debes hacer join-room primero.` };
+    }
+
+     const existingBuffer = this.roomDetailsBuffer.get(data.salesSheetId) ?? [];
     const nextDetail: WsSalesSheetDetailDto = {
-      clientsId: body.clientsId,
-      productsId: body.productsId,
-      quantity: body.quantity,
-      discount: body.discount,
+      clientsId: data.clientsId,
+      productsId: data.productsId,
+      quantity: data.quantity,
+      discount: data.discount,
     };
 
     const updatedBuffer = [...existingBuffer, nextDetail];
-    this.roomDetailsBuffer.set(body.salesSheetId, updatedBuffer);
+    this.roomDetailsBuffer.set(data.salesSheetId, updatedBuffer);
 
-    this.logger.log(`Detail added to room ${this.getRoomName(body.salesSheetId)}. Buffered details count: ${updatedBuffer.length}`);
-
-    this.server.to(this.getRoomName(body.salesSheetId)).emit('buffer-updated', {
-      salesSheetId: body.salesSheetId,
+    this.logger.log(`Detail added to room ${roomName}: ${JSON.stringify(nextDetail)}`);
+    // Emite a todos en el room incluyendo al emisor
+    this.server.to(roomName).emit('detail-added', {
+      salesSheetId: data.salesSheetId,
+      detail: nextDetail,
       bufferedDetails: updatedBuffer,
     });
 
-    return {
-      event: 'detail-buffered',
-      salesSheetId: body.salesSheetId,
-      bufferedCount: updatedBuffer.length,
-      detail: nextDetail,
-    };
+    return { event: 'detail-added', detail: nextDetail };
   }
 
-  @SubscribeMessage('get-buffer')
-  async getRoomBuffer(@MessageBody() body: WsSalesSheetRoomDto) {
-    await this.salesSheetService.findOne(body.salesSheetId);
+  @SubscribeMessage('leave-room')
+  handleLeaveRoom(@ConnectedSocket() client: Socket, @MessageBody() data: WsSalesSheetRoomDto) {
+    const roomName = `sales-sheet-${data.salesSheetId}`;
+    
 
-    const bufferedDetails = this.roomDetailsBuffer.get(body.salesSheetId) ?? [];
+    
+    client.leave(roomName);
+    this.roomDetailsBuffer.delete(data.salesSheetId);
+    this.activeRooms.delete(roomName);
 
-    return {
-      salesSheetId: body.salesSheetId,
-      bufferedDetails,
-    };
-  }
-
-  @SubscribeMessage('close-room')
-  async closeRoom(@MessageBody() body: WsSalesSheetRoomDto) {
-    await this.salesSheetService.findOne(body.salesSheetId);
-
-    const bufferedDetails = this.roomDetailsBuffer.get(body.salesSheetId) ?? [];
-
-    if (bufferedDetails.length === 0) {
-      this.roomDetailsBuffer.delete(body.salesSheetId);
-
-      this.server.to(this.getRoomName(body.salesSheetId)).emit('room-closed', {
-        salesSheetId: body.salesSheetId,
-        persistedCount: 0,
-      });
-
-      return {
-        event: 'room-closed',
-        salesSheetId: body.salesSheetId,
-        persistedCount: 0,
-      };
-    }
-
-    const persistedDetails = await Promise.all(
-      bufferedDetails.map((detail) =>
-        this.detailsSalesSheetService.create({
-          ...detail,
-          salesSheetId: body.salesSheetId,
-        }),
-      ),
-    );
-
-    this.roomDetailsBuffer.delete(body.salesSheetId);
-
-    this.server.to(this.getRoomName(body.salesSheetId)).emit('room-closed', {
-      salesSheetId: body.salesSheetId,
-      persistedCount: persistedDetails.length,
-    });
-
-    return {
-      event: 'room-closed',
-      salesSheetId: body.salesSheetId,
-      persistedCount: persistedDetails.length,
-      persistedDetails,
-    };
-  }
-
-  private getRoomName(salesSheetId: number): string {
-    return `sales-sheet-${salesSheetId}`;
+    this.logger.log(`Client ${client.id} left room: ${roomName}`);
+    return { event: 'left-room', message: `Saliste del room ${roomName}` };
   }
 }

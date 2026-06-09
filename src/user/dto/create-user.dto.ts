@@ -4,28 +4,28 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, IsBoolean, IsNumber } from '
 export class CreateUserDto {
   @IsEmail()
   @IsNotEmpty()
-  email: string;
+  email!: string;
 
   @IsString()
   @IsNotEmpty()
-  fullName: string;
+  fullName!: string;
 
   @IsString()
   @IsNotEmpty()
-  password: string;
+  password!: string;
 
   @IsString()
-  imagen: string;
+  imagen!: string;
 
   @IsNotEmpty()
   @IsNumber()
-  rol: number;
+  rol!: number;
 
   @IsOptional()
   @IsBoolean()
-  isActive: boolean;
+  isActive?: boolean;
 
   @IsOptional()
   @IsBoolean()
-  isLoged: boolean;
+  isLoged?: boolean;
 }
