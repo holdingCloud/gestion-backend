@@ -19,6 +19,7 @@ const DateRangeQueries = () =>
     ApiQuery({ name: 'startDate', required: false, type: String, description: 'Fecha inicio (ISO 8601) — ej: 2026-01-01' }),
     ApiQuery({ name: 'endDate',   required: false, type: String, description: 'Fecha fin   (ISO 8601) — ej: 2026-06-30' }),
     ApiQuery({ name: 'communeId', required: false, type: Number, description: 'Filtrar por ID de comuna' }),
+    ApiQuery({ name: 'companyId', required: false, type: Number, description: 'Filtrar por ID de empresa' }),
   );
 
 const PeriodQuery = () =>
@@ -72,7 +73,7 @@ Ordenable por **frecuencia** (más frecuente primero), **purchaseCount** o **tot
       description: 'Array de clientes con sus métricas de compra',
       schema: {
         example: [
-          { clientId: 1, clientName: 'Pedro Rodríguez', communeName: 'Las Condes', purchaseCount: 5, avgDaysBetweenPurchases: 12.5, totalAmount: 45000 },
+          { clientId: 1, clientName: 'Pedro Rodríguez', communeName: 'Las Condes', companyName: 'Empresa ABC', purchaseCount: 5, avgDaysBetweenPurchases: 12.5, totalAmount: 45000 },
         ],
       },
     }),
@@ -120,11 +121,12 @@ export const InactiveClientsDocs = () =>
 Ordenado de mayor a menor desviación respecto a su frecuencia habitual. Solo incluye clientes con frecuencia registrada y al menos una compra finalizada.`,
     }),
     ApiQuery({ name: 'communeId', required: false, type: Number, description: 'Filtrar por ID de comuna' }),
+    ApiQuery({ name: 'companyId', required: false, type: Number, description: 'Filtrar por ID de empresa' }),
     ApiOkResponse({
       description: 'Array de clientes con nivel de alerta y desviación',
       schema: {
         example: [
-          { clientId: 3, clientName: 'Ana Silva', communeName: 'Providencia', frequency: 30, lastPurchaseDate: '2026-03-01', avgDaysBetweenPurchases: 28.5, daysSinceLastPurchase: 75, deviation: 45, alertLevel: 'RIESGO' },
+          { clientId: 3, clientName: 'Ana Silva', communeName: 'Providencia', companyName: 'Empresa ABC', frequency: 30, lastPurchaseDate: '2026-03-01', avgDaysBetweenPurchases: 28.5, daysSinceLastPurchase: 75, deviation: 45, alertLevel: 'RIESGO' },
         ],
       },
     }),
@@ -146,7 +148,7 @@ Solo incluye clientes con frecuencia calculada.`,
       description: 'Array de clientes top ordenados por frecuencia',
       schema: {
         example: [
-          { rank: 1, clientId: 7, clientName: 'Carlos Muñoz', communeName: 'Santiago', avgDaysBetweenPurchases: 5, totalAmount: 180000, purchaseCount: 24 },
+          { rank: 1, clientId: 7, clientName: 'Carlos Muñoz', communeName: 'Santiago', companyName: 'Empresa XYZ', avgDaysBetweenPurchases: 5, totalAmount: 180000, purchaseCount: 24 },
         ],
       },
     }),
@@ -198,6 +200,7 @@ export const DailyKpisDocs = () =>
     }),
     ApiQuery({ name: 'date',      required: false, type: String, description: 'Fecha a consultar (ISO 8601) — default: hoy' }),
     ApiQuery({ name: 'communeId', required: false, type: Number, description: 'Filtrar por ID de comuna' }),
+    ApiQuery({ name: 'companyId', required: false, type: Number, description: 'Filtrar por ID de empresa' }),
     ApiOkResponse({
       description: 'KPIs del día con comparativa vs día anterior',
       schema: {

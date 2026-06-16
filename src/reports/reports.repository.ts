@@ -17,9 +17,10 @@ export class ReportsRepository {
     return { start, end };
   }
 
-  async getSalesByProduct(startDate?: string, endDate?: string, communeId?: number, period: ReportPeriod = ReportPeriod.DAY) {
+  async getSalesByProduct(startDate?: string, endDate?: string, communeId?: number, period: ReportPeriod = ReportPeriod.DAY, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter  = communeId  ? Prisma.sql`AND c."communeId"  = ${communeId}`  : Prisma.empty;
+    const companyFilter  = companyId  ? Prisma.sql`AND c."companyId"  = ${companyId}`  : Prisma.empty;
     const truncUnit = Prisma.raw(`'${period}'`);
 
     const [byProduct, byPeriod] = await Promise.all([
@@ -45,6 +46,7 @@ export class ReportsRepository {
         JOIN "Clients"  c ON b."clientsId"  = c.id
         WHERE b."purchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
+        ${companyFilter}
         GROUP BY p.id, p.name, p.code
         ORDER BY "finalized" DESC
       `,
@@ -58,6 +60,7 @@ export class ReportsRepository {
         JOIN "Clients" c ON b."clientsId" = c.id
         WHERE b."purchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
+        ${companyFilter}
         GROUP BY DATE_TRUNC(${truncUnit}, b."purchaseDate")
         ORDER BY "period" ASC
       `,
@@ -72,10 +75,12 @@ export class ReportsRepository {
     communeId?: number,
     clientId?: number,
     orderBy: ClientReportOrderBy = ClientReportOrderBy.FREQUENCY,
+    companyId?: number,
   ) {
     const { start, end } = this.buildDateRange(startDate, endDate);
     const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
     const clientFilter  = clientId  ? Prisma.sql`AND c.id = ${clientId}`           : Prisma.empty;
+    const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     const orderMap = {
       [ClientReportOrderBy.FREQUENCY]: Prisma.raw(`"avgDaysBetweenPurchases" ASC NULLS LAST`),
@@ -89,6 +94,7 @@ export class ReportsRepository {
         c.id          AS "clientId",
         c.fullname    AS "clientName",
         co.name       AS "communeName",
+        comp.name     AS "companyName",
         COUNT(b.id) FILTER (WHERE b."purchaseDate" BETWEEN ${start} AND ${end})::int AS "purchaseCount",
         cpf."avgDaysBetweenPurchases",
         COALESCE(
@@ -99,6 +105,7 @@ export class ReportsRepository {
       FROM "Clients" c
       LEFT JOIN "buyByClient" b ON b."clientsId" = c.id
       LEFT JOIN "Commune" co ON c."communeId" = co.id
+      LEFT JOIN "Company" comp ON c."companyId" = comp.id
       LEFT JOIN (
         SELECT "clientsId", ROUND(AVG("avgDaysBetweenPurchases"), 1)::float AS "avgDaysBetweenPurchases"
         FROM "ClientProductFrequency"
@@ -107,14 +114,16 @@ export class ReportsRepository {
       WHERE c.available = true
       ${communeFilter}
       ${clientFilter}
-      GROUP BY c.id, c.fullname, co.name, cpf."avgDaysBetweenPurchases"
+      ${companyFilter}
+      GROUP BY c.id, c.fullname, co.name, comp.name, cpf."avgDaysBetweenPurchases"
       ORDER BY ${orderClause}
     `;
   }
 
-  async getSalesEvolution(startDate?: string, endDate?: string, communeId?: number, period: ReportPeriod = ReportPeriod.DAY) {
+  async getSalesEvolution(startDate?: string, endDate?: string, communeId?: number, period: ReportPeriod = ReportPeriod.DAY, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
     const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
     const truncUnit = Prisma.raw(`'${period}'`);
 
     const series = await this.prisma.$queryRaw<any[]>`
@@ -129,6 +138,7 @@ export class ReportsRepository {
       JOIN "Clients" c ON b."clientsId" = c.id
       WHERE b."purchaseDate" BETWEEN ${start} AND ${end}
       ${communeFilter}
+      ${companyFilter}
       GROUP BY DATE_TRUNC(${truncUnit}, b."purchaseDate")
       ORDER BY "period" ASC
     `;
@@ -147,6 +157,7 @@ export class ReportsRepository {
         WHERE b."purchaseStatus" = 'FINALIZADO'
           AND b."purchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
+        ${companyFilter}
       `,
       this.prisma.$queryRaw<{ total: number; txCount: number }[]>`
         SELECT
@@ -157,6 +168,7 @@ export class ReportsRepository {
         WHERE b."purchaseStatus" = 'FINALIZADO'
           AND b."purchaseDate" BETWEEN ${prevStart} AND ${prevEnd}
         ${communeFilter}
+        ${companyFilter}
       `,
     ]);
 
@@ -187,33 +199,38 @@ export class ReportsRepository {
     };
   }
 
-  async getInactiveClients(communeId?: number) {
+  async getInactiveClients(communeId?: number, companyId?: number) {
     const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     return this.prisma.$queryRaw<any[]>`
       SELECT
         c.id       AS "clientId",
         c.fullname AS "clientName",
         co.name    AS "communeName",
+        comp.name  AS "companyName",
         c.frequency,
         MAX(cpf."actualPurchaseDate")                                    AS "lastPurchaseDate",
         ROUND(AVG(cpf."avgDaysBetweenPurchases"), 1)::float             AS "avgDaysBetweenPurchases",
         EXTRACT(DAY FROM NOW() - MAX(cpf."actualPurchaseDate"))::int     AS "daysSinceLastPurchase"
       FROM "Clients" c
       LEFT JOIN "Commune" co ON c."communeId" = co.id
+      LEFT JOIN "Company" comp ON c."companyId" = comp.id
       LEFT JOIN "ClientProductFrequency" cpf ON cpf."clientsId" = c.id
       WHERE c.available = true
         AND c.frequency IS NOT NULL
       ${communeFilter}
-      GROUP BY c.id, c.fullname, co.name, c.frequency
+      ${companyFilter}
+      GROUP BY c.id, c.fullname, co.name, comp.name, c.frequency
       HAVING MAX(cpf."actualPurchaseDate") IS NOT NULL
       ORDER BY EXTRACT(DAY FROM NOW() - MAX(cpf."actualPurchaseDate")) DESC NULLS LAST
     `;
   }
 
-  async getTopClients(startDate?: string, endDate?: string, communeId?: number, limit: number = 10) {
+  async getTopClients(startDate?: string, endDate?: string, communeId?: number, limit: number = 10, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
     const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     return this.prisma.$queryRaw<any[]>`
       SELECT
@@ -221,6 +238,7 @@ export class ReportsRepository {
         c.id       AS "clientId",
         c.fullname AS "clientName",
         co.name    AS "communeName",
+        comp.name  AS "companyName",
         cpf."avgDaysBetweenPurchases",
         COALESCE(
           SUM(b.quantity * b."unitPrice") FILTER (WHERE b."purchaseStatus" = 'FINALIZADO'),
@@ -229,6 +247,7 @@ export class ReportsRepository {
         COUNT(b.id) FILTER (WHERE b."purchaseStatus" = 'FINALIZADO')::int AS "purchaseCount"
       FROM "Clients" c
       LEFT JOIN "Commune" co ON c."communeId" = co.id
+      LEFT JOIN "Company" comp ON c."companyId" = comp.id
       LEFT JOIN (
         SELECT "clientsId", ROUND(AVG("avgDaysBetweenPurchases"), 1)::float AS "avgDaysBetweenPurchases"
         FROM "ClientProductFrequency"
@@ -240,15 +259,17 @@ export class ReportsRepository {
       WHERE c.available = true
         AND cpf."avgDaysBetweenPurchases" IS NOT NULL
       ${communeFilter}
-      GROUP BY c.id, c.fullname, co.name, cpf."avgDaysBetweenPurchases"
+      ${companyFilter}
+      GROUP BY c.id, c.fullname, co.name, comp.name, cpf."avgDaysBetweenPurchases"
       ORDER BY cpf."avgDaysBetweenPurchases" ASC
       LIMIT ${limit}
     `;
   }
 
-  async getAvgPurchaseFrequency(startDate?: string, endDate?: string, communeId?: number) {
+  async getAvgPurchaseFrequency(startDate?: string, endDate?: string, communeId?: number, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
     const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     const [avgResult, histogram] = await Promise.all([
       this.prisma.$queryRaw<{ globalAvg: number }[]>`
@@ -259,6 +280,7 @@ export class ReportsRepository {
           AND c.available = true
           AND cpf."actualPurchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
+        ${companyFilter}
       `,
       this.prisma.$queryRaw<any[]>`
         SELECT
@@ -283,6 +305,7 @@ export class ReportsRepository {
           AND c.available = true
           AND cpf."actualPurchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
+        ${companyFilter}
         GROUP BY 1, 2
         ORDER BY 2
       `,
@@ -294,7 +317,7 @@ export class ReportsRepository {
     };
   }
 
-  async getDailyKpis(date?: string, communeId?: number) {
+  async getDailyKpis(date?: string, communeId?: number, companyId?: number) {
     const target    = date ? new Date(date) : new Date();
     const dayStart  = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 0, 0, 0, 0);
     const dayEnd    = new Date(target.getFullYear(), target.getMonth(), target.getDate(), 23, 59, 59, 999);
@@ -302,6 +325,7 @@ export class ReportsRepository {
     const prevEnd   = new Date(dayEnd.getTime()   - 86_400_000);
 
     const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     const metricsQuery = (s: Date, e: Date) => this.prisma.$queryRaw<any[]>`
       SELECT
@@ -323,6 +347,7 @@ export class ReportsRepository {
       JOIN "Clients" c ON b."clientsId" = c.id
       WHERE b."purchaseDate" BETWEEN ${s} AND ${e}
       ${communeFilter}
+      ${companyFilter}
     `;
 
     const newClientsQuery = (s: Date, e: Date) => this.prisma.$queryRaw<{ count: number }[]>`
@@ -331,6 +356,7 @@ export class ReportsRepository {
       WHERE c."createdAt" BETWEEN ${s} AND ${e}
         AND c.available = true
       ${communeFilter}
+      ${companyFilter}
     `;
 
     const [curr, prev, currNew, prevNew] = await Promise.all([

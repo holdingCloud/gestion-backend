@@ -96,6 +96,15 @@ model Commune {
   updatedAt DateTime  @updatedAt
 }
 
+model Company {
+  id          Int       @id @default(autoincrement())
+  name        String    @db.VarChar(150)
+  description String?   @db.VarChar(500)
+  clients     Clients[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 model Clients {
   id                       Int                      @id @default(autoincrement())
   fullname                 String                   @db.VarChar(150)
@@ -106,6 +115,8 @@ model Clients {
   email                    String                   @db.VarChar(100)
   commune                  Commune?                 @relation(fields: [communeId], references: [id])
   communeId                Int?
+  company                  Company?                 @relation(fields: [companyId], references: [id])
+  companyId                Int?
   detailsSalesSheets       detailsSalesSheet[]
   buysByClient             buyByClient[]
   clientProductFrequencies ClientProductFrequency[]
@@ -116,6 +127,7 @@ model Clients {
   updatedAt                DateTime                 @updatedAt
 
   @@index([available])
+  @@index([companyId])
 }
 
 model buyByClient {

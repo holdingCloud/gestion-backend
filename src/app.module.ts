@@ -15,6 +15,7 @@ import { DetailsSalesSheetModule } from './details-sales-sheet/details-sales-she
 import { HealthModule } from './health/health.module';
 import { LocationModule } from './location/location.module';
 import { ReportsModule } from './reports/reports.module';
+import { CompanyModule } from './company/company.module';
 
 
 
@@ -38,6 +39,7 @@ import { ReportsModule } from './reports/reports.module';
     HealthModule,
     LocationModule,
     ReportsModule,
+    CompanyModule,
   ],
   controllers: [],
   providers: [],

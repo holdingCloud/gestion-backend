@@ -34,6 +34,11 @@ export class CreateClientDto {
   @IsOptional()
   @IsInt()
   @Min(1)
+  companyId?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
   frequency?: number;
 
   @IsOptional()

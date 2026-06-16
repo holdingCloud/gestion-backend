@@ -38,6 +38,7 @@ export const CreateClientDocs = () =>
             phone: '+56912345678',
             email: 'pedro.rodriguez@email.com',
             communeId: 1,
+            companyId: 1,
             frequency: 30,
             contactStatus: 'LLAMAR',
           },

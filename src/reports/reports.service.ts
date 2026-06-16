@@ -16,7 +16,7 @@ export class ReportsService {
   constructor(private readonly repo: ReportsRepository) {}
 
   salesByProduct(dto: SalesByProductFilterDto) {
-    return this.repo.getSalesByProduct(dto.startDate, dto.endDate, dto.communeId, dto.period ?? ReportPeriod.DAY);
+    return this.repo.getSalesByProduct(dto.startDate, dto.endDate, dto.communeId, dto.period ?? ReportPeriod.DAY, dto.companyId);
   }
 
   clientPurchasesReport(dto: ClientPurchasesFilterDto) {
@@ -26,15 +26,16 @@ export class ReportsService {
       dto.communeId,
       dto.clientId,
       dto.orderBy ?? ClientReportOrderBy.FREQUENCY,
+      dto.companyId,
     );
   }
 
   salesEvolution(dto: SalesEvolutionFilterDto) {
-    return this.repo.getSalesEvolution(dto.startDate, dto.endDate, dto.communeId, dto.period ?? ReportPeriod.DAY);
+    return this.repo.getSalesEvolution(dto.startDate, dto.endDate, dto.communeId, dto.period ?? ReportPeriod.DAY, dto.companyId);
   }
 
   async inactiveClients(dto: BaseFilterDto) {
-    const rows = await this.repo.getInactiveClients(dto.communeId);
+    const rows = await this.repo.getInactiveClients(dto.communeId, dto.companyId);
     return rows.map((row) => {
       const frequency = Number(row.frequency ?? 0);
       const days = Number(row.daysSinceLastPurchase ?? 0);
@@ -53,14 +54,14 @@ export class ReportsService {
   }
 
   topClients(dto: TopClientsFilterDto) {
-    return this.repo.getTopClients(dto.startDate, dto.endDate, dto.communeId, dto.limit ?? 10);
+    return this.repo.getTopClients(dto.startDate, dto.endDate, dto.communeId, dto.limit ?? 10, dto.companyId);
   }
 
   avgPurchaseFrequency(dto: BaseFilterDto) {
-    return this.repo.getAvgPurchaseFrequency(dto.startDate, dto.endDate, dto.communeId);
+    return this.repo.getAvgPurchaseFrequency(dto.startDate, dto.endDate, dto.communeId, dto.companyId);
   }
 
   dailyKpis(dto: DailyKpisFilterDto) {
-    return this.repo.getDailyKpis(dto.date, dto.communeId);
+    return this.repo.getDailyKpis(dto.date, dto.communeId, dto.companyId);
   }
 }

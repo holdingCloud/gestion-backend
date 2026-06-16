@@ -2,6 +2,12 @@ import { ContactStatus } from '@prisma/client';
 import { ClientProductFrequencyEntity } from './client-product-frequency.entity';
 import { CommuneEntity } from './commune.entity';
 
+export class CompanyRef {
+  id!: number;
+  name!: string;
+  description!: string | null;
+}
+
 export class ClientEntity {
   id!: number;
   fullname!: string;
@@ -12,6 +18,8 @@ export class ClientEntity {
   email!: string;
   communeId!: number | null;
   commune?: CommuneEntity | null;
+  companyId!: number | null;
+  company?: CompanyRef | null;
   available!: boolean;
   contactStatus!: ContactStatus;
   frequency!: number | null;

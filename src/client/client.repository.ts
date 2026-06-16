@@ -47,6 +47,7 @@ export class ClientRepository {
           take: limit,
           include: {
             commune: { select: { id: true, name: true, regionId: true } },
+            company: { select: { id: true, name: true, description: true } },
             clientProductFrequencies: {
               include: { product: { select: { id: true, name: true, code: true } } },
               orderBy: { actualPurchaseDate: 'desc' },
@@ -68,6 +69,7 @@ export class ClientRepository {
         where: { id },
         include: {
           commune: { select: { id: true, name: true, regionId: true } },
+          company: { select: { id: true, name: true, description: true } },
           clientProductFrequencies: {
             include: { product: { select: { id: true, name: true, code: true } } },
             orderBy: { actualPurchaseDate: 'desc' },

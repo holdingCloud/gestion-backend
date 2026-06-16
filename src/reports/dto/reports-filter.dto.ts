@@ -30,6 +30,12 @@ export class BaseFilterDto {
   @Type(() => Number)
   @IsInt()
   communeId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por ID de empresa', type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  companyId?: number;
 }
 
 export class SalesByProductFilterDto extends BaseFilterDto {
@@ -79,4 +85,10 @@ export class DailyKpisFilterDto {
   @Type(() => Number)
   @IsInt()
   communeId?: number;
+
+  @ApiPropertyOptional({ description: 'Filtrar por ID de empresa', type: Number })
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  companyId?: number;
 }
