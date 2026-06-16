@@ -29,13 +29,15 @@ export const CreateClientDocs = () =>
       type: CreateClientDto,
       examples: {
         completo: {
-          summary: 'Cliente con frecuencia inicial conocida',
+          summary: 'Cliente con todos los campos',
           value: {
             fullname: 'Pedro Rodríguez',
-            city: 'Santiago',
-            address: 'Av. Las Condes 4500, Dpto 12',
+            address: 'Av. Las Condes 4500',
+            n_depto_casa: 'Dpto 12',
+            referencia: 'Frente al mall',
             phone: '+56912345678',
             email: 'pedro.rodriguez@email.com',
+            communeId: 1,
             frequency: 30,
             contactStatus: 'LLAMAR',
           },
@@ -44,7 +46,6 @@ export const CreateClientDocs = () =>
           summary: 'Cliente mínimo',
           value: {
             fullname: 'Ana Silva',
-            city: 'Valparaíso',
             address: 'Calle Blanco 210',
             phone: '+56987654321',
             email: 'ana.silva@email.com',
@@ -67,7 +68,8 @@ export const FindAllClientsDocs = () =>
     ApiQuery({ name: 'limit', required: false, type: Number }),
     ApiQuery({ name: 'contactStatus', required: false, enum: ContactStatus, description: 'Filtrar por estado de contacto' }),
     ApiQuery({ name: 'search', required: false, type: String, description: 'Buscar por nombre del cliente (insensible a mayúsculas)' }),
-    ApiQuery({ name: 'city', required: false, type: String, description: 'Filtrar por ciudad (insensible a mayúsculas)' }),
+    ApiQuery({ name: 'communeId', required: false, type: Number, description: 'Filtrar por ID de comuna' }),
+    ApiQuery({ name: 'regionId', required: false, type: Number, description: 'Filtrar por ID de región (filtra via la comuna asociada)' }),
     ApiOkResponse({ description: 'Lista paginada de clientes con sus frecuencias' }),
     ApiUnauthorizedResponse({ description: 'No autorizado' }),
   );

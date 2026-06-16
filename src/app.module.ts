@@ -13,27 +13,31 @@ import { BillModule } from './bill/bill.module';
 import { BillDetailsModule } from './bill-details/bill-details.module';
 import { DetailsSalesSheetModule } from './details-sales-sheet/details-sales-sheet.module';
 import { HealthModule } from './health/health.module';
+import { LocationModule } from './location/location.module';
+import { ReportsModule } from './reports/reports.module';
 
 
 
 @Module({
-  imports: [ 
+  imports: [
     ConfigModule.forRoot({
     isGlobal: true,
     }),
     PrismaModule,
-    AuthModule, 
-    ClientModule, 
-    EmployeeModule, 
-    FileUploadModule, 
-    ImagesModule, 
-    ProductModule, 
+    AuthModule,
+    ClientModule,
+    EmployeeModule,
+    FileUploadModule,
+    ImagesModule,
+    ProductModule,
     BillModule,
     BillDetailsModule,
-    SalesSheetModule, 
+    SalesSheetModule,
     DetailsSalesSheetModule,
     UserModule,
     HealthModule,
+    LocationModule,
+    ReportsModule,
   ],
   controllers: [],
   providers: [],

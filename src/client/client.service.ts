@@ -37,10 +37,11 @@ export class ClientService {
     limit: number = 10,
     contactStatus?: ContactStatus,
     search?: string,
-    city?: string,
+    communeId?: number,
+    regionId?: number,
   ): Promise<PaginatedResponse<ClientEntity>> {
     try {
-      const { clients, total } = await this.repo.findAll(page, limit, contactStatus, search, city);
+      const { clients, total } = await this.repo.findAll(page, limit, contactStatus, search, communeId, regionId);
       const refreshed = await Promise.all(clients.map((c) => this.refreshClientStatus(c)));
       return new PaginatedResponse(
         refreshed.map((c) => this.buildClientEntity(c)),

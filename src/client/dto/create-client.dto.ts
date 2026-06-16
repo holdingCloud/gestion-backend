@@ -8,11 +8,15 @@ export class CreateClientDto {
 
   @IsString()
   @IsNotEmpty()
-  city!: string;
-
-  @IsString()
-  @IsNotEmpty()
   address!: string;
+
+  @IsOptional()
+  @IsString()
+  n_depto_casa?: string;
+
+  @IsOptional()
+  @IsString()
+  referencia?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -21,6 +25,11 @@ export class CreateClientDto {
   @IsEmail()
   @IsNotEmpty()
   email!: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  communeId?: number;
 
   @IsOptional()
   @IsInt()

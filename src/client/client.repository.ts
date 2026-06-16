@@ -30,20 +30,23 @@ export class ClientRepository {
     limit: number = 10,
     contactStatus?: ContactStatus,
     search?: string,
-    city?: string,
+    communeId?: number,
+    regionId?: number,
   ) {
     try {
       const skip = (page - 1) * limit;
       const where: Prisma.ClientsWhereInput = { available: true };
       if (contactStatus) where.contactStatus = contactStatus;
       if (search) where.fullname = { contains: search, mode: 'insensitive' };
-      if (city) where.city = { contains: city, mode: 'insensitive' };
+      if (communeId) where.communeId = communeId;
+      if (regionId) where.commune = { regionId };
       const [clients, total] = await Promise.all([
         this.prisma.clients.findMany({
           where,
           skip,
           take: limit,
           include: {
+            commune: { select: { id: true, name: true, regionId: true } },
             clientProductFrequencies: {
               include: { product: { select: { id: true, name: true, code: true } } },
               orderBy: { actualPurchaseDate: 'desc' },
@@ -64,6 +67,7 @@ export class ClientRepository {
       return await this.prisma.clients.findUnique({
         where: { id },
         include: {
+          commune: { select: { id: true, name: true, regionId: true } },
           clientProductFrequencies: {
             include: { product: { select: { id: true, name: true, code: true } } },
             orderBy: { actualPurchaseDate: 'desc' },

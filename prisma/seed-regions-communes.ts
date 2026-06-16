@@ -1,32 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
-
-type SeedUser = {
-  email: string;
-  fullName: string;
-  password: string;
-  imagen: string;
-  type: 'ADMINISTRADOR' | 'REPARTIDOR' | 'COMUN';
-};
-
-const users: SeedUser[] = [
-  {
-    email: 'admin@local.test',
-    fullName: 'Admin Principal',
-    password: 'Admin1234',
-    imagen: 'default-admin.png',
-    type: 'ADMINISTRADOR',
-  },
-  {
-    email: 'user@local.test',
-    fullName: 'Usuario Comun',
-    password: 'User1234',
-    imagen: 'default-user.png',
-    type: 'COMUN',
-  },
-];
 
 const regionsData = [
   {
@@ -161,7 +135,7 @@ const regionsData = [
     communes: [
       'Coyhaique', 'Lago Verde',
       'Aysén', 'Cisnes', 'Guaitecas',
-      'Cochrane', "O'Higgins", 'Tortel',
+      'Cochrane', 'O\'Higgins', 'Tortel',
       'Chile Chico', 'Río Ibáñez',
     ],
   },
@@ -176,70 +150,12 @@ const regionsData = [
   },
 ];
 
-async function seedRoles() {
-  const roles = await prisma.roles.findMany();
-  if (roles.length === 0) {
-    const types: ('ADMINISTRADOR' | 'REPARTIDOR' | 'COMUN')[] = [
-      'ADMINISTRADOR',
-      'REPARTIDOR',
-      'COMUN',
-    ];
-    for (const type of types) {
-      await prisma.roles.create({ data: { type } });
-      console.log(`✅ Rol ${type} creado`);
-    }
-  }
-}
+async function main() {
+  console.log('🌱 Iniciando seed de regiones y comunas...');
 
-async function seedUsers() {
-  for (const seedUser of users) {
-    try {
-      const existingUser = await prisma.users.findUnique({
-        where: { email: seedUser.email },
-      });
-
-      if (existingUser) {
-        console.log(`✅ Usuario ${seedUser.email} ya existe`);
-        continue;
-      }
-
-      const role = await prisma.roles.findUnique({
-        where: { type: seedUser.type },
-      });
-
-      if (!role) throw new Error(`Rol ${seedUser.type} no encontrado`);
-
-      const passwordHash = await bcrypt.hash(seedUser.password, 10);
-
-      const newUser = await prisma.users.create({
-        data: {
-          email: seedUser.email,
-          fullName: seedUser.fullName,
-          password: passwordHash,
-          imagen: seedUser.imagen,
-          rol: { connect: { id: role.id } },
-          isActive: true,
-          isLoged: false,
-        },
-        include: { rol: true },
-      });
-
-      console.log(
-        `✅ Usuario ${newUser.email} creado con rol ${newUser.rol.type}`,
-      );
-    } catch (error) {
-      console.error(
-        `❌ Error:`,
-        error instanceof Error ? error.message : error,
-      );
-    }
-  }
-}
-
-async function seedRegionsAndCommunes() {
-  const existing = await prisma.region.count();
-  if (existing > 0) {
-    console.log('✅ Regiones y comunas ya existen, omitiendo seed.');
+  const existingRegions = await prisma.region.count();
+  if (existingRegions > 0) {
+    console.log('✅ Las regiones ya existen, omitiendo seed.');
     return;
   }
 
@@ -254,20 +170,10 @@ async function seedRegionsAndCommunes() {
     });
     console.log(`✅ Región creada: ${region.name} (${regionData.communes.length} comunas)`);
   }
-}
-
-async function main() {
-  console.log('🌱 Iniciando seed...');
-
-  await seedRoles();
-  await seedUsers();
-
-  console.log('🌱 Iniciando seed de regiones y comunas...');
-  await seedRegionsAndCommunes();
 
   const totalRegions = await prisma.region.count();
   const totalCommunes = await prisma.commune.count();
-  console.log(`✨ Seed completado! ${totalRegions} regiones, ${totalCommunes} comunas.`);
+  console.log(`✨ Seed completado: ${totalRegions} regiones y ${totalCommunes} comunas.`);
 }
 
 main()

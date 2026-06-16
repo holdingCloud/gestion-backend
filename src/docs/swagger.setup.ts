@@ -22,6 +22,7 @@ export function setupSwagger(app: INestApplication): void {
     .addTag('Sales Sheet', 'Hojas de venta diarias')
     .addTag('Details Sales Sheet', 'Ítems de hojas de venta')
     .addTag('Health', 'Estado del servicio')
+    .addTag('Reports', 'Reportes de ventas, clientes y KPIs')
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

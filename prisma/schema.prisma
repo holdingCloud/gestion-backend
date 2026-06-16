@@ -78,13 +78,34 @@ model Products {
   @@index([available])
 }
 
+model Region {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  communes  Commune[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Commune {
+  id        Int       @id @default(autoincrement())
+  name      String    @db.VarChar(100)
+  region    Region    @relation(fields: [regionId], references: [id])
+  regionId  Int
+  clients   Clients[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
 model Clients {
   id                       Int                      @id @default(autoincrement())
   fullname                 String                   @db.VarChar(150)
-  city                     String                   @db.VarChar(50)
   address                  String                   @db.VarChar(100)
+  n_depto_casa             String?                  @db.VarChar(50)
+  referencia               String?                  @db.VarChar(200)
   phone                    String                   @db.VarChar(15)
   email                    String                   @db.VarChar(100)
+  commune                  Commune?                 @relation(fields: [communeId], references: [id])
+  communeId                Int?
   detailsSalesSheets       detailsSalesSheet[]
   buysByClient             buyByClient[]
   clientProductFrequencies ClientProductFrequency[]

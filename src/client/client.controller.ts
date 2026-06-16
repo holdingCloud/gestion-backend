@@ -60,9 +60,17 @@ export class ClientController {
     @Query(ParsePaginationPipe) pagination: any,
     @Query('contactStatus') contactStatus?: ContactStatus,
     @Query('search') search?: string,
-    @Query('city') city?: string,
+    @Query('communeId') communeId?: string,
+    @Query('regionId') regionId?: string,
   ) {
-    return this.clientService.findAll(pagination.page, pagination.limit, contactStatus, search, city);
+    return this.clientService.findAll(
+      pagination.page,
+      pagination.limit,
+      contactStatus,
+      search,
+      communeId ? parseInt(communeId, 10) : undefined,
+      regionId ? parseInt(regionId, 10) : undefined,
+    );
   }
 
   @Get(':id')
