@@ -1,8 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// ═══════════════════════════════════════════════════════════════
+//  schema.prisma — Sistema de Gestión (Chile)
+//  Versión 3.0 — Módulos: Auth, Geo, Direcciones (transversal),
+//  Clientes, Inventario, Ventas, Proveedores, Compras,
+//  Cuentas, Empleados RRHH
+// ═══════════════════════════════════════════════════════════════
 
 generator client {
   provider = "prisma-client-js"
@@ -13,11 +14,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum typePosition {
+// ─────────────────────────────────────────────
+// ENUMS — AUTH / SISTEMA
+// ─────────────────────────────────────────────
+
+enum SystemRole {
   ADMINISTRADOR
   REPARTIDOR
   COMUN
 }
+
+// ─────────────────────────────────────────────
+// ENUMS — DIRECCIONES
+// ─────────────────────────────────────────────
+
+enum TipoDireccion {
+  PRINCIPAL
+  FACTURACION
+  DESPACHO
+  COMERCIAL
+  TRABAJO
+  SUCURSAL
+  BODEGA
+  OTRO
+}
+
+// ─────────────────────────────────────────────
+// ENUMS — INVENTARIO
+// ─────────────────────────────────────────────
+
+enum TipoMovimientoTipo {
+  ENTRADA
+  SALIDA
+  AJUSTE
+  TRASLADO
+}
+
+enum UnidadMedida {
+  UNIDAD
+  KG
+  LITRO
+  METRO
+  CAJA
+  BOLSA
+  OTRO
+}
+
+// ─────────────────────────────────────────────
+// ENUMS — CLIENTES / VENTAS
+// ─────────────────────────────────────────────
 
 enum ContactStatus {
   LLAMAR
@@ -38,45 +83,265 @@ enum FrequencyStatus {
   VENCIDO
 }
 
-model Users {
-  id       Int      @id @default(autoincrement())
-  fullName String   @db.VarChar(200)
-  email    String   @unique @db.VarChar(30)
-  password String   @db.VarChar(150)
-  imagen   String   @db.VarChar(150)
-  rol      Roles     @relation(fields: [rolesId], references: [id])
-  rolesId  Int
-  isActive Boolean @default(true)
-  isLoged  Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+enum SalesSheetStatus {
+  BORRADOR
+  FINALIZADA
+  ANULADA
 }
 
+// ─────────────────────────────────────────────
+// ENUMS — PROVEEDORES / COMPRAS
+// ─────────────────────────────────────────────
+
+enum CondicionPago {
+  CONTADO
+  DIAS_30
+  DIAS_60
+  DIAS_90
+}
+
+/// IVA Chile: AFECTO = 19%, EXENTO = sin IVA
+enum CondicionIVA {
+  AFECTO
+  EXENTO
+}
+
+enum MetodoPago {
+  TRANSFERENCIA
+  CHEQUE
+  EFECTIVO
+  DEBITO_AUTOMATICO
+}
+
+enum OrdenCompraEstado {
+  BORRADOR
+  APROBADA
+  ENVIADA
+  RECIBIDA_PARCIAL
+  RECIBIDA_TOTAL
+  ANULADA
+}
+
+enum RecepcionEstado {
+  COMPLETA
+  PARCIAL
+  CON_DIFERENCIAS
+}
+
+/// Tipos DTE según SII Chile
+enum TipoDTE {
+  FACTURA_ELECTRONICA_33
+  FACTURA_EXENTA_34
+  NOTA_CREDITO_61
+  NOTA_DEBITO_56
+}
+
+enum DocumentoEstado {
+  PENDIENTE
+  PAGADA
+  VENCIDA
+  ANULADA
+}
+
+// ─────────────────────────────────────────────
+// ENUMS — CUENTAS / GASTOS FIJOS
+// ─────────────────────────────────────────────
+
+enum CategoriaCuenta {
+  SERVICIOS_BASICOS
+  ARRIENDO
+  TELEFONIA
+  INTERNET
+  SEGUROS
+  OTRO
+}
+
+enum EstadoPago {
+  PENDIENTE
+  PAGADO
+  VENCIDO
+}
+
+// ─────────────────────────────────────────────
+// ENUMS — EMPLEADOS (RRHH CHILE)
+// ─────────────────────────────────────────────
+
+enum EstadoCivil {
+  SOLTERO
+  CASADO
+  DIVORCIADO
+  VIUDO
+  CONVIVIENTE_CIVIL
+}
+
+enum Sexo {
+  MASCULINO
+  FEMENINO
+  OTRO
+}
+
+enum TipoSistemaSalud {
+  FONASA
+  ISAPRE
+}
+
+enum TipoCuentaBancaria {
+  CUENTA_CORRIENTE
+  CUENTA_VISTA
+  CUENTA_AHORRO
+  CUENTA_RUT
+}
+
+enum Parentesco {
+  CONYUGE
+  CONVIVIENTE_CIVIL
+  HIJO
+  PADRE
+  MADRE
+  OTRO
+}
+
+enum TipoGratificacion {
+  /// Art. 50 CT — 25% mensual topado a 4.75 IMM
+  MENSUAL_GARANTIZADA
+  /// Art. 47 CT — 30% utilidades anuales
+  ANUAL_PROPORCIONAL
+}
+
+enum ContratoEstado {
+  VIGENTE
+  TERMINADO
+  RENOVADO
+}
+
+enum MotivoAnexo {
+  CAMBIO_CARGO
+  CAMBIO_SUELDO
+  CAMBIO_JORNADA
+  OTRO
+}
+
+enum LiquidacionEstado {
+  BORRADOR
+  APROBADA
+  PAGADA
+}
+
+enum CategoriaItemLiquidacion {
+  HABER_IMPONIBLE
+  HABER_NO_IMPONIBLE
+  DESCUENTO_LEGAL
+  DESCUENTO_VOLUNTARIO
+}
+
+enum TipoVacaciones {
+  LEGAL         // 15 días hábiles (art. 67 CT)
+  PROGRESIVO    // +1 día por cada 3 años (art. 68 CT)
+  COLECTIVO
+  PROPORCIONAL  // Al momento de término
+}
+
+enum EstadoSolicitud {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+}
+
+enum TipoLicencia {
+  ENFERMEDAD_COMUN
+  ACCIDENTE_TRABAJO
+  PRENATAL
+  POSTNATAL
+  PATERNAL
+  OTRO
+}
+
+enum EntidadLicencia {
+  COMPIN
+  ISAPRE
+}
+
+enum TipoPermiso {
+  ADMINISTRATIVO
+  MEDICO
+  PERSONAL
+  OTRO
+}
+
+/// Causales de término según Código del Trabajo Chile
+enum CausalFiniquito {
+  ART_159_1 // Mutuo acuerdo de las partes
+  ART_159_2 // Vencimiento del plazo convenido
+  ART_159_3 // Conclusión del trabajo o servicio
+  ART_159_4 // Caso fortuito o fuerza mayor
+  ART_160   // Causales imputables al trabajador
+  ART_161   // Necesidades de la empresa (despido)
+}
+
+enum FiniquitoEstado {
+  BORRADOR
+  FIRMADO
+  RATIFICADO // Ante notario o Inspector del Trabajo
+}
+
+enum TipoDocumentoEmpleado {
+  CONTRATO
+  ANEXO_CONTRATO
+  CARNET_IDENTIDAD
+  CERTIFICADO_AFP
+  CERTIFICADO_SALUD
+  LIQUIDACION
+  FINIQUITO
+  OTRO
+}
+
+// ═══════════════════════════════════════════════════════════════
+// MODELOS
+// ═══════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────
+// AUTH / SISTEMA
+// ─────────────────────────────────────────────
+
+model Users {
+  id         Int        @id @default(autoincrement())
+  fullName   String     @db.VarChar(200)
+  email      String     @unique @db.VarChar(100)
+  password   String     @db.VarChar(150)
+  imagen     String     @db.VarChar(300)
+  rol        Roles      @relation(fields: [rolesId], references: [id])
+  rolesId    Int
+  /// Vincula el usuario del sistema con su ficha de empleado
+  employee   Employees? @relation("UserEmployee", fields: [employeeId], references: [id])
+  employeeId Int?       @unique
+  isActive   Boolean    @default(true)
+  isLoged    Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  // Acciones realizadas por este usuario
+  salesSheets               salesSheets[]
+  ordenesCompraCreadas      OrdenesCompra[]         @relation("OCCreador")
+  ordenesCompraAprobadas    OrdenesCompra[]         @relation("OCAprobador")
+  recepcionesRealizadas     RecepcionesMercaderia[]
+  pagosProveedorRegistrados PagosProveedor[]
+  notasProveedor            NotasProveedor[]
+  movimientosInventario     MovimientosInventario[]
+  documentosEmpleado        DocumentosEmpleado[]
+  vacacionesAprobadas       SolicitudesVacaciones[]
+}
 
 model Roles {
-  id        Int      @id @default(autoincrement())
-  type      typePosition @unique
-  user      Users[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        Int        @id @default(autoincrement())
+  type      SystemRole @unique
+  users     Users[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 }
 
-model Products {
-  id                       Int                      @id @default(autoincrement())
-  name                     String                   @db.VarChar(25)
-  description              String                   @db.VarChar(50)
-  quantity                 Int
-  available                Boolean                  @default(true)
-  img                      String                   @db.VarChar(50)
-  code                     String                   @db.VarChar(50)
-  detailsSalesSheets       detailsSalesSheet[]
-  buysByClient             buyByClient[]
-  clientProductFrequencies ClientProductFrequency[]
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
-
-  @@index([available])
-}
+// ─────────────────────────────────────────────
+// GEOGRAFÍA
+// ─────────────────────────────────────────────
 
 model Region {
   id        Int       @id @default(autoincrement())
@@ -87,36 +352,90 @@ model Region {
 }
 
 model Commune {
-  id        Int       @id @default(autoincrement())
-  name      String    @db.VarChar(100)
-  region    Region    @relation(fields: [regionId], references: [id])
-  regionId  Int
-  clients   Clients[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(100)
+  region      Region        @relation(fields: [regionId], references: [id])
+  regionId    Int
+  /// Todas las direcciones de esta comuna (entidad centralizada)
+  direcciones Direcciones[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
+// ─────────────────────────────────────────────
+// DIRECCIONES — Tabla transversal
+// Centraliza direcciones de Employees, Clients,
+// Proveedores, Company, Bodegas y CuentasGasto
+// ─────────────────────────────────────────────
+
+model Direcciones {
+  id           Int           @id @default(autoincrement())
+  tipo         TipoDireccion @default(PRINCIPAL)
+  calle        String        @db.VarChar(200)
+  numero       String        @db.VarChar(20)
+  /// N° depto, oficina, block, etc.
+  departamento String?       @db.VarChar(50)
+  /// Referencia de ubicación (ej: "frente al supermercado")
+  referencia   String?       @db.VarChar(200)
+  commune      Commune?      @relation(fields: [communeId], references: [id])
+  communeId    Int?
+  /// Coordenadas para integración con mapas
+  latitud      Decimal?      @db.Decimal(10, 8)
+  longitud     Decimal?      @db.Decimal(11, 8)
+  /// Indica si es la dirección principal de la entidad
+  principal    Boolean       @default(false)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // ── Relaciones opcionales: una dirección pertenece
+  //    a exactamente UNO de los siguientes ──────────
+  employee    Employees?   @relation(fields: [employeeId], references: [id])
+  employeeId  Int?
+
+  client      Clients?     @relation(fields: [clientId], references: [id])
+  clientId    Int?
+
+  proveedor   Proveedores? @relation(fields: [proveedorId], references: [id])
+  proveedorId Int?
+
+  company     Company?     @relation(fields: [companyId], references: [id])
+  companyId   Int?
+
+  bodega      Bodegas?     @relation(fields: [bodegaId], references: [id])
+  bodegaId    Int?
+
+  cuentaGasto CuentasGasto? @relation(fields: [cuentaGastoId], references: [id])
+  cuentaGastoId Int?
+
+  @@index([communeId])
+  @@index([tipo])
+}
+
+// ─────────────────────────────────────────────
+// CLIENTES
+// ─────────────────────────────────────────────
+
 model Company {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(150)
-  description String?   @db.VarChar(500)
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(150)
+  description String?       @db.VarChar(500)
   clients     Clients[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  direcciones Direcciones[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
 }
 
 model Clients {
   id                       Int                      @id @default(autoincrement())
+  /// RUT cliente — formato XX.XXX.XXX-X
+  rut                      String?                  @db.VarChar(20)
   fullname                 String                   @db.VarChar(150)
-  address                  String                   @db.VarChar(100)
-  n_depto_casa             String?                  @db.VarChar(50)
-  referencia               String?                  @db.VarChar(200)
   phone                    String                   @db.VarChar(15)
-  email                    String                   @db.VarChar(100)
-  commune                  Commune?                 @relation(fields: [communeId], references: [id])
-  communeId                Int?
+  email                    String                   @unique @db.VarChar(100)
   company                  Company?                 @relation(fields: [companyId], references: [id])
   companyId                Int?
+  /// Direcciones del cliente (PRINCIPAL, DESPACHO, FACTURACION, etc.)
+  direcciones              Direcciones[]
   detailsSalesSheets       detailsSalesSheet[]
   buysByClient             buyByClient[]
   clientProductFrequencies ClientProductFrequency[]
@@ -130,6 +449,137 @@ model Clients {
   @@index([companyId])
 }
 
+// ─────────────────────────────────────────────
+// INVENTARIO
+// ─────────────────────────────────────────────
+
+model Categorias {
+  id          Int          @id @default(autoincrement())
+  nombre      String       @db.VarChar(100)
+  descripcion String?      @db.Text
+  /// Permite subcategorías (ej: Bebidas > Jugos)
+  parent      Categorias?  @relation("CategoriaHijos", fields: [parentId], references: [id])
+  parentId    Int?
+  hijos       Categorias[] @relation("CategoriaHijos")
+  products    Products[]
+  activa      Boolean      @default(true)
+}
+
+model Bodegas {
+  id            Int                     @id @default(autoincrement())
+  nombre        String                  @db.VarChar(100)
+  /// Direcciones físicas de la bodega
+  direcciones   Direcciones[]
+  responsable   Employees?              @relation("BodegaResponsable", fields: [responsableId], references: [id])
+  responsableId Int?
+  products      Products[]
+  movimientos   MovimientosInventario[]
+  activa        Boolean                 @default(true)
+}
+
+model TiposMovimiento {
+  id          Int                     @id @default(autoincrement())
+  nombre      String                  @db.VarChar(80)
+  tipo        TipoMovimientoTipo
+  afectaStock Boolean                 @default(true)
+  descripcion String?                 @db.Text
+  movimientos MovimientosInventario[]
+}
+
+model Products {
+  id                       Int                      @id @default(autoincrement())
+  name                     String                   @db.VarChar(150)
+  description              String                   @db.Text
+  categoria                Categorias?              @relation(fields: [categoriaId], references: [id])
+  categoriaId              Int?
+  bodega                   Bodegas?                 @relation(fields: [bodegaId], references: [id])
+  bodegaId                 Int?
+  unidadMedida             UnidadMedida             @default(UNIDAD)
+  /// Stock actual — se actualiza con cada MovimientoInventario
+  quantity                 Int                      @default(0)
+  stockMinimo              Int                      @default(0)
+  /// Precio de venta al cliente
+  price                    Decimal                  @db.Decimal(10, 2)
+  /// Costo promedio ponderado — método aceptado por SII Chile
+  precioPromedio           Decimal?                 @db.Decimal(10, 2)
+  precioUltimoCosto        Decimal?                 @db.Decimal(10, 2)
+  available                Boolean                  @default(true)
+  img                      String                   @db.VarChar(300)
+  code                     String                   @unique @db.VarChar(50)
+  detailsSalesSheets       detailsSalesSheet[]
+  buysByClient             buyByClient[]
+  clientProductFrequencies ClientProductFrequency[]
+  movimientosInventario    MovimientosInventario[]
+  productosProveedor       ProductosProveedor[]
+  itemsOrdenCompra         ItemsOrdenCompra[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+
+  @@index([available])
+  @@index([categoriaId])
+}
+
+model MovimientosInventario {
+  id               Int             @id @default(autoincrement())
+  producto         Products        @relation(fields: [productoId], references: [id])
+  productoId       Int
+  bodega           Bodegas         @relation(fields: [bodegaId], references: [id])
+  bodegaId         Int
+  tipoMovimiento   TiposMovimiento @relation(fields: [tipoMovimientoId], references: [id])
+  tipoMovimientoId Int
+  cantidad         Int
+  precioUnitario   Decimal         @db.Decimal(10, 2)
+  /// cantidad × precioUnitario
+  valorTotal       Decimal         @db.Decimal(12, 2)
+  stockAnterior    Int
+  stockResultante  Int
+  /// Si el movimiento viene de una OC
+  ordenCompra      OrdenesCompra?  @relation(fields: [ordenCompraId], references: [id])
+  ordenCompraId    Int?
+  /// Si el movimiento viene de una venta
+  salesSheet       salesSheets?    @relation(fields: [salesSheetId], references: [id])
+  salesSheetId     Int?
+  observacion      String?         @db.Text
+  realizadoPor     Users           @relation(fields: [realizadoPorId], references: [id])
+  realizadoPorId   Int
+  createdAt        DateTime        @default(now())
+
+  @@index([productoId, createdAt])
+  @@index([bodegaId])
+}
+
+// ─────────────────────────────────────────────
+// VENTAS
+// ─────────────────────────────────────────────
+
+model salesSheets {
+  id                    Int                     @id @default(autoincrement())
+  employee              Employees               @relation(fields: [employeeId], references: [id])
+  employeeId            Int
+  date                  DateTime
+  description           String                  @db.Text
+  bill                  TiposCuenta             @relation(fields: [billId], references: [id])
+  billId                Int
+  totalAmount           Decimal                 @default(0) @db.Decimal(12, 2)
+  status                SalesSheetStatus        @default(BORRADOR)
+  detailsSalesSheet     detailsSalesSheet[]
+  movimientosInventario MovimientosInventario[]
+}
+
+model detailsSalesSheet {
+  id           Int         @id @default(autoincrement())
+  client       Clients     @relation(fields: [clientsId], references: [id])
+  clientsId    Int
+  product      Products    @relation(fields: [productsId], references: [id])
+  productsId   Int
+  quantity     Int
+  /// Precio unitario al momento de la venta (snapshot)
+  unitPrice    Decimal     @db.Decimal(10, 2)
+  discount     Decimal     @default(0) @db.Decimal(5, 2)
+  salesSheet   salesSheets @relation(fields: [salesSheetId], references: [id])
+  salesSheetId Int
+}
+
 model buyByClient {
   id             Int            @id @default(autoincrement())
   client         Clients        @relation(fields: [clientsId], references: [id])
@@ -137,7 +587,7 @@ model buyByClient {
   product        Products       @relation(fields: [productsId], references: [id])
   productsId     Int
   quantity       Int
-  unitPrice      Float
+  unitPrice      Decimal        @db.Decimal(10, 2)
   purchaseDate   DateTime?
   purchaseStatus PurchaseStatus @default(PENDIENTE)
   createdAt      DateTime       @default(now())
@@ -166,62 +616,586 @@ model ClientProductFrequency {
   @@index([status])
 }
 
+// ─────────────────────────────────────────────
+// PROVEEDORES — compartido con Compras y Cuentas
+// ─────────────────────────────────────────────
+
+model Proveedores {
+  id             Int                  @id @default(autoincrement())
+  /// RUT — formato XX.XXX.XXX-X
+  rut            String               @unique @db.VarChar(20)
+  razonSocial    String               @db.VarChar(200)
+  nombreFantasia String?              @db.VarChar(150)
+  giroComercial  String               @db.VarChar(200)
+  email          String               @db.VarChar(100)
+  telefono       String?              @db.VarChar(15)
+  sitioWeb       String?              @db.VarChar(200)
+  /// Direcciones del proveedor (comercial, despacho, sucursales, etc.)
+  direcciones    Direcciones[]
+  condicionPago  CondicionPago        @default(CONTADO)
+  diasCredito    Int?
+  limiteCredito  Decimal?             @db.Decimal(12, 2)
+  /// AFECTO = sujeto a IVA 19% | EXENTO = sin IVA
+  condicionIVA   CondicionIVA         @default(AFECTO)
+  /// Calificación interna 1-5
+  calificacion   Int?
+  disponible     Boolean              @default(true)
+  contactos      ContactosProveedor[]
+  productos      ProductosProveedor[]
+  notas          NotasProveedor[]
+  ordenesCompra  OrdenesCompra[]
+  facturas       FacturasCompra[]
+  pagos          PagosProveedor[]
+  /// Servicios que provee (luz, agua, arriendo, etc.)
+  cuentasGasto   CuentasGasto[]
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  @@index([disponible])
+}
+
+model ContactosProveedor {
+  id          Int         @id @default(autoincrement())
+  proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
+  proveedorId Int
+  nombre      String      @db.VarChar(150)
+  cargo       String?     @db.VarChar(100)
+  email       String?     @db.VarChar(100)
+  telefono    String?     @db.VarChar(15)
+  esPrincipal Boolean     @default(false)
+}
+
+model ProductosProveedor {
+  id                Int         @id @default(autoincrement())
+  proveedor         Proveedores @relation(fields: [proveedorId], references: [id])
+  proveedorId       Int
+  producto          Products    @relation(fields: [productoId], references: [id])
+  productoId        Int
+  codigoProveedor   String?     @db.VarChar(50)
+  precioUnitario    Decimal     @db.Decimal(10, 2)
+  tiempoEntregaDias Int?
+  cantidadMinima    Int?
+  activo            Boolean     @default(true)
+  updatedAt         DateTime    @updatedAt
+
+  @@unique([proveedorId, productoId])
+}
+
+model NotasProveedor {
+  id          Int         @id @default(autoincrement())
+  proveedor   Proveedores @relation(fields: [proveedorId], references: [id])
+  proveedorId Int
+  nota        String      @db.Text
+  creadoPor   Users       @relation(fields: [creadoPorId], references: [id])
+  creadoPorId Int
+  createdAt   DateTime    @default(now())
+}
+
+model PagosProveedor {
+  id              Int             @id @default(autoincrement())
+  proveedor       Proveedores     @relation(fields: [proveedorId], references: [id])
+  proveedorId     Int
+  factura         FacturasCompra? @relation(fields: [facturaId], references: [id])
+  facturaId       Int?
+  fecha           DateTime        @db.Date
+  monto           Decimal         @db.Decimal(12, 2)
+  metodoPago      MetodoPago
+  comprobante     String?         @db.VarChar(300)
+  observacion     String?         @db.Text
+  registradoPor   Users           @relation(fields: [registradoPorId], references: [id])
+  registradoPorId Int
+  createdAt       DateTime        @default(now())
+
+  @@index([proveedorId, fecha])
+}
+
+// ─────────────────────────────────────────────
+// COMPRAS — flujo: OC → Guía de Despacho → DTE
+// ─────────────────────────────────────────────
+
+model OrdenesCompra {
+  id                    Int                     @id @default(autoincrement())
+  /// Número correlativo de OC (ej: OC-2024-0001)
+  numero                String                  @unique @db.VarChar(30)
+  proveedor             Proveedores             @relation(fields: [proveedorId], references: [id])
+  proveedorId           Int
+  solicitadoPor         Users                   @relation("OCCreador", fields: [solicitadoPorId], references: [id])
+  solicitadoPorId       Int
+  aprobadoPor           Users?                  @relation("OCAprobador", fields: [aprobadoPorId], references: [id])
+  aprobadoPorId         Int?
+  fechaEmision          DateTime                @db.Date
+  fechaEntregaEsperada  DateTime?               @db.Date
+  estado                OrdenCompraEstado       @default(BORRADOR)
+  neto                  Decimal                 @db.Decimal(12, 2)
+  iva                   Decimal                 @db.Decimal(10, 2)
+  total                 Decimal                 @db.Decimal(12, 2)
+  condicionPago         CondicionPago           @default(CONTADO)
+  observaciones         String?                 @db.Text
+  items                 ItemsOrdenCompra[]
+  recepciones           RecepcionesMercaderia[]
+  facturas              FacturasCompra[]
+  movimientosInventario MovimientosInventario[]
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+
+  @@index([estado])
+  @@index([proveedorId])
+}
+
+model ItemsOrdenCompra {
+  id               Int              @id @default(autoincrement())
+  ordenCompra      OrdenesCompra    @relation(fields: [ordenCompraId], references: [id])
+  ordenCompraId    Int
+  producto         Products         @relation(fields: [productoId], references: [id])
+  productoId       Int
+  cantidad         Int
+  precioUnitario   Decimal          @db.Decimal(10, 2)
+  descuento        Decimal          @default(0) @db.Decimal(5, 2)
+  subtotal         Decimal          @db.Decimal(12, 2)
+  cantidadRecibida Int              @default(0)
+  itemsRecepcion   ItemsRecepcion[]
+}
+
+model RecepcionesMercaderia {
+  id              Int              @id @default(autoincrement())
+  ordenCompra     OrdenesCompra    @relation(fields: [ordenCompraId], references: [id])
+  ordenCompraId   Int
+  fechaRecepcion  DateTime         @db.Date
+  recibidoPor     Users            @relation(fields: [recibidoPorId], references: [id])
+  recibidoPorId   Int
+  /// N° Guía de Despacho SII (documento de tránsito previo a la factura)
+  guiaDespachoNum String?          @db.VarChar(50)
+  estado          RecepcionEstado
+  observaciones   String?          @db.Text
+  items           ItemsRecepcion[]
+  createdAt       DateTime         @default(now())
+}
+
+model ItemsRecepcion {
+  id                Int                   @id @default(autoincrement())
+  recepcion         RecepcionesMercaderia @relation(fields: [recepcionId], references: [id])
+  recepcionId       Int
+  itemOrdenCompra   ItemsOrdenCompra      @relation(fields: [itemOrdenCompraId], references: [id])
+  itemOrdenCompraId Int
+  cantidadRecibida  Int
+  cantidadPendiente Int
+  observacion       String?               @db.Text
+}
+
+model FacturasCompra {
+  id               Int              @id @default(autoincrement())
+  ordenCompra      OrdenesCompra?   @relation(fields: [ordenCompraId], references: [id])
+  ordenCompraId    Int?
+  proveedor        Proveedores      @relation(fields: [proveedorId], references: [id])
+  proveedorId      Int
+  /// Tipo de Documento Tributario Electrónico (DTE) según SII Chile
+  tipoDTE          TipoDTE
+  /// Folio asignado por el SII
+  folio            String           @db.VarChar(20)
+  fechaEmision     DateTime         @db.Date
+  fechaVencimiento DateTime?        @db.Date
+  neto             Decimal          @db.Decimal(12, 2)
+  iva              Decimal          @db.Decimal(10, 2)
+  total            Decimal          @db.Decimal(12, 2)
+  estado           DocumentoEstado  @default(PENDIENTE)
+  pagos            PagosProveedor[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@index([proveedorId, estado])
+  @@index([fechaVencimiento])
+}
+
+// ─────────────────────────────────────────────
+// CUENTAS / GASTOS FIJOS
+// ─────────────────────────────────────────────
+
+/// Tipo/categoría de gasto (ej: Electricidad, Agua, Arriendo)
+model TiposCuenta {
+  id           Int              @id @default(autoincrement())
+  nombre       String           @db.VarChar(100)
+  categoria    CategoriaCuenta
+  descripcion  String?          @db.Text
+  activo       Boolean          @default(true)
+  cuentasGasto CuentasGasto[]
+  salesSheets  salesSheets[]
+}
+
+/// Cuenta específica de gasto (ej: "Luz Enel Sede Norte")
+model CuentasGasto {
+  id             Int           @id @default(autoincrement())
+  tipo           TiposCuenta   @relation(fields: [tipoId], references: [id])
+  tipoId         Int
+  nombre         String        @db.VarChar(150)
+  proveedor      Proveedores?  @relation(fields: [proveedorId], references: [id])
+  proveedorId    Int?
+  numeroCuenta   String?       @db.VarChar(50)
+  diaVencimiento Int?
+  esRecurrente   Boolean       @default(true)
+  montoEstimado  Decimal?      @db.Decimal(10, 2)
+  activa         Boolean       @default(true)
+  pagos          PagosCuenta[]
+  /// Dirección física donde se presta el servicio
+  direcciones    Direcciones[]
+  createdAt      DateTime      @default(now())
+}
+
+/// Registro de cada boleta/pago de una cuenta de gasto
+model PagosCuenta {
+  id               Int          @id @default(autoincrement())
+  cuenta           CuentasGasto @relation(fields: [cuentaId], references: [id])
+  cuentaId         Int
+  periodo          DateTime     @db.Date
+  numeroDocumento  String?      @db.VarChar(50)
+  monto            Decimal      @db.Decimal(10, 2)
+  fechaEmision     DateTime?    @db.Date
+  fechaVencimiento DateTime     @db.Date
+  fechaPago        DateTime?    @db.Date
+  estadoPago       EstadoPago   @default(PENDIENTE)
+  metodoPago       MetodoPago?
+  comprobante      String?      @db.VarChar(300)
+  observacion      String?      @db.Text
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  @@index([estadoPago])
+  @@index([fechaVencimiento])
+  @@index([cuentaId, periodo])
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EMPLEADOS — MÓDULO RRHH CHILE
+// ═══════════════════════════════════════════════════════════════
+
+// ─────────────────────────────────────────────
+// CORE
+// ─────────────────────────────────────────────
+
 model Employees {
-  id          Int           @id @default(autoincrement())
-  rut         String        @db.VarChar(20)
-  fullname    String        @db.VarChar(150)
-  email       String        @db.VarChar(100)
-  salary      Int
-  hireDate    String        @db.VarChar(20)
-  city        String        @db.VarChar(50)
-  address     String        @db.VarChar(100)
-  available   Boolean       @default(true)
-  type        typePosition  @default(COMUN)
-  salesSheets salesSheets[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id              Int            @id @default(autoincrement())
+  /// RUT — formato XX.XXX.XXX-X
+  rut             String         @unique @db.VarChar(20)
+  nombres         String         @db.VarChar(100)
+  apellidoPaterno String         @db.VarChar(80)
+  apellidoMaterno String?        @db.VarChar(80)
+  fechaNacimiento DateTime       @db.Date
+  estadoCivil     EstadoCivil
+  sexo            Sexo
+  email           String         @db.VarChar(100)
+  telefono        String?        @db.VarChar(15)
+  /// Direcciones del empleado (hogar, trabajo, etc.)
+  direcciones     Direcciones[]
+  cargo           Cargos?        @relation(fields: [cargoId], references: [id])
+  cargoId         Int?
+  departamento    Departamentos? @relation(fields: [departamentoId], references: [id])
+  departamentoId  Int?
+  afp             AFP?           @relation(fields: [afpId], references: [id])
+  afpId           Int?
+  sistemaSalud    SistemasSalud? @relation(fields: [sistemaSaludId], references: [id])
+  sistemaSaludId  Int?
+  mutual          Mutuales?      @relation(fields: [mutualId], references: [id])
+  mutualId        Int?
+  /// Auto-relación para estructura organizacional
+  jefeDirecto     Employees?     @relation("JerarquiaEmpleados", fields: [jefeDirectoId], references: [id])
+  jefeDirectoId   Int?
+  subordinados    Employees[]    @relation("JerarquiaEmpleados")
+  /// Fecha de ingreso a la empresa
+  hireDate        DateTime       @db.Date
+  available       Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  // Relaciones
+  user                  Users?                     @relation("UserEmployee")
+  salesSheets           salesSheets[]
+  cuentasBancarias      CuentasBancariasEmpleado[]
+  cargasFamiliares      CargasFamiliares[]
+  contratos             Contratos[]
+  liquidaciones         Liquidaciones[]
+  anticipos             Anticipos[]
+  solicitudesVacaciones SolicitudesVacaciones[]
+  licenciasMedicas      LicenciasMedicas[]
+  permisos              Permisos[]
+  finiquitos            Finiquitos[]
+  documentos            DocumentosEmpleado[]
+  libroRemuneraciones   LibroRemuneraciones[]
+  bodegasACargo         Bodegas[]                  @relation("BodegaResponsable")
 
   @@index([available])
 }
 
-model Bills {
-  id          Int           @id @default(autoincrement())
-  name        String        @db.VarChar(50)
-  details     BillDetails[]
-  salesSheets salesSheets[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+model Departamentos {
+  id          Int         @id @default(autoincrement())
+  nombre      String      @db.VarChar(100)
+  descripcion String?     @db.Text
+  activo      Boolean     @default(true)
+  cargos      Cargos[]
+  employees   Employees[]
 }
 
-model BillDetails {
-  id        Int      @id @default(autoincrement())
-  amount    Int
-  date      DateTime
-  bill      Bills    @relation(fields: [billsId], references: [id])
-  billsId   Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+model Cargos {
+  id             Int           @id @default(autoincrement())
+  departamento   Departamentos @relation(fields: [departamentoId], references: [id])
+  departamentoId Int
+  nombre         String        @db.VarChar(100)
+  descripcion    String?       @db.Text
+  activo         Boolean       @default(true)
+  employees      Employees[]
 }
 
-model salesSheets {
-  id                Int                 @id @default(autoincrement())
-  employee          Employees           @relation(fields: [employeeId], references: [id])
+model CuentasBancariasEmpleado {
+  id           Int                @id @default(autoincrement())
+  employee     Employees          @relation(fields: [employeeId], references: [id])
+  employeeId   Int
+  banco        String             @db.VarChar(80)
+  tipoCuenta   TipoCuentaBancaria
+  numeroCuenta String             @db.VarChar(30)
+  principal    Boolean            @default(false)
+}
+
+// ─────────────────────────────────────────────
+// PREVISIÓN (tablas de referencia)
+// ─────────────────────────────────────────────
+
+/// AFP: Habitat, PlanVital, ProVida, Capital, Cuprum, Modelo, Uno
+model AFP {
+  id             Int         @id @default(autoincrement())
+  nombre         String      @db.VarChar(50)
+  tasaCotizacion Decimal     @db.Decimal(5, 4)
+  comision       Decimal     @db.Decimal(5, 4)
+  activa         Boolean     @default(true)
+  employees      Employees[]
+}
+
+model SistemasSalud {
+  id             Int              @id @default(autoincrement())
+  tipo           TipoSistemaSalud
+  nombre         String           @db.VarChar(80)
+  tasaCotizacion Decimal          @db.Decimal(5, 4)
+  activo         Boolean          @default(true)
+  employees      Employees[]
+}
+
+/// ACHS, IST, Mutual de Seguridad
+model Mutuales {
+  id        Int         @id @default(autoincrement())
+  nombre    String      @db.VarChar(80)
+  activa    Boolean     @default(true)
+  employees Employees[]
+}
+
+model CargasFamiliares {
+  id              Int        @id @default(autoincrement())
+  employee        Employees  @relation(fields: [employeeId], references: [id])
+  employeeId      Int
+  rut             String     @db.VarChar(20)
+  nombre          String     @db.VarChar(150)
+  parentesco      Parentesco
+  fechaNacimiento DateTime   @db.Date
+  activa          Boolean    @default(true)
+}
+
+// ─────────────────────────────────────────────
+// CONTRATOS
+// ─────────────────────────────────────────────
+
+model TiposContrato {
+  id          Int         @id @default(autoincrement())
+  nombre      String      @db.VarChar(80)
+  descripcion String?     @db.Text
+  contratos   Contratos[]
+}
+
+model Contratos {
+  id                Int               @id @default(autoincrement())
+  employee          Employees         @relation(fields: [employeeId], references: [id])
   employeeId        Int
-  date              DateTime
-  description       String              @db.Text
-  bill              Bills               @relation(fields: [billId], references: [id])
-  billId            Int
-  detailsSalesSheet detailsSalesSheet[]
+  tipoContrato      TiposContrato     @relation(fields: [tipoContratoId], references: [id])
+  tipoContratoId    Int
+  fechaInicio       DateTime          @db.Date
+  fechaTermino      DateTime?         @db.Date
+  sueldoBase        Decimal           @db.Decimal(10, 2)
+  /// Ley 21.561 — máx. 40h semanales
+  jornadaHoras      Int               @default(40)
+  gratificacionTipo TipoGratificacion @default(MENSUAL_GARANTIZADA)
+  estado            ContratoEstado    @default(VIGENTE)
+  documentoUrl      String?           @db.VarChar(300)
+  anexos            AnexosContrato[]
+  finiquitos        Finiquitos[]
 }
 
-model detailsSalesSheet {
+model AnexosContrato {
   id           Int         @id @default(autoincrement())
-  client       Clients     @relation(fields: [clientsId], references: [id])
-  clientsId    Int
-  product      Products    @relation(fields: [productsId], references: [id])
-  productsId   Int
-  quantity     Int
-  discount     Float
-  salesSheet   salesSheets @relation(fields: [salesSheetId], references: [id])
-  salesSheetId Int
+  contrato     Contratos   @relation(fields: [contratoId], references: [id])
+  contratoId   Int
+  fechaAnexo   DateTime    @db.Date
+  motivo       MotivoAnexo
+  nuevoCargo   String?     @db.VarChar(100)
+  nuevoSueldo  Decimal?    @db.Decimal(10, 2)
+  descripcion  String?     @db.Text
+  documentoUrl String?     @db.VarChar(300)
+  createdAt    DateTime    @default(now())
+}
+
+// ─────────────────────────────────────────────
+// REMUNERACIONES
+// ─────────────────────────────────────────────
+
+model Liquidaciones {
+  id                         Int               @id @default(autoincrement())
+  employee                   Employees         @relation(fields: [employeeId], references: [id])
+  employeeId                 Int
+  periodo                    DateTime          @db.Date
+  sueldoBase                 Decimal           @db.Decimal(10, 2)
+  totalHaberesImponibles     Decimal           @db.Decimal(12, 2)
+  totalHaberesNoImponibles   Decimal           @db.Decimal(12, 2)
+  totalDescuentosLegales     Decimal           @db.Decimal(12, 2)
+  totalDescuentosVoluntarios Decimal           @default(0) @db.Decimal(12, 2)
+  /// Impuesto Único de Segunda Categoría (tabla SII)
+  impuestoSegundaCategoria   Decimal           @default(0) @db.Decimal(10, 2)
+  liquidoAPagar              Decimal           @db.Decimal(12, 2)
+  estado                     LiquidacionEstado @default(BORRADOR)
+  documentoUrl               String?           @db.VarChar(300)
+  items                      ItemsLiquidacion[]
+  libroRemuneraciones        LibroRemuneraciones[]
+  createdAt                  DateTime          @default(now())
+  updatedAt                  DateTime          @updatedAt
+
+  @@unique([employeeId, periodo])
+  @@index([periodo])
+}
+
+model TiposItemLiquidacion {
+  id          Int                      @id @default(autoincrement())
+  nombre      String                   @db.VarChar(100)
+  categoria   CategoriaItemLiquidacion
+  imponible   Boolean                  @default(false)
+  esDescuento Boolean                  @default(false)
+  esLegal     Boolean                  @default(false)
+  activo      Boolean                  @default(true)
+  items       ItemsLiquidacion[]
+}
+
+model ItemsLiquidacion {
+  id            Int                  @id @default(autoincrement())
+  liquidacion   Liquidaciones        @relation(fields: [liquidacionId], references: [id])
+  liquidacionId Int
+  tipoItem      TiposItemLiquidacion @relation(fields: [tipoItemId], references: [id])
+  tipoItemId    Int
+  monto         Decimal              @db.Decimal(10, 2)
+  observacion   String?              @db.Text
+}
+
+model Anticipos {
+  id               Int       @id @default(autoincrement())
+  employee         Employees @relation(fields: [employeeId], references: [id])
+  employeeId       Int
+  monto            Decimal   @db.Decimal(10, 2)
+  fecha            DateTime  @db.Date
+  periodoDescuento DateTime  @db.Date
+  descontado       Boolean   @default(false)
+  createdAt        DateTime  @default(now())
+}
+
+// ─────────────────────────────────────────────
+// TIEMPO Y AUSENCIAS
+// ─────────────────────────────────────────────
+
+model SolicitudesVacaciones {
+  id              Int             @id @default(autoincrement())
+  employee        Employees       @relation(fields: [employeeId], references: [id])
+  employeeId      Int
+  fechaInicio     DateTime        @db.Date
+  fechaFin        DateTime        @db.Date
+  diasHabiles     Int
+  tipo            TipoVacaciones
+  estado          EstadoSolicitud @default(PENDIENTE)
+  aprobadoPor     Users?          @relation(fields: [aprobadoPorId], references: [id])
+  aprobadoPorId   Int?
+  fechaAprobacion DateTime?       @db.Date
+  createdAt       DateTime        @default(now())
+}
+
+model LicenciasMedicas {
+  id             Int             @id @default(autoincrement())
+  employee       Employees       @relation(fields: [employeeId], references: [id])
+  employeeId     Int
+  numeroLicencia String?         @db.VarChar(30)
+  tipo           TipoLicencia
+  entidad        EntidadLicencia
+  fechaInicio    DateTime        @db.Date
+  fechaFin       DateTime        @db.Date
+  dias           Int
+  estado         EstadoSolicitud @default(PENDIENTE)
+  montoSubsidio  Decimal?        @db.Decimal(10, 2)
+  documentoUrl   String?         @db.VarChar(300)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+}
+
+model Permisos {
+  id            Int             @id @default(autoincrement())
+  employee      Employees       @relation(fields: [employeeId], references: [id])
+  employeeId    Int
+  fecha         DateTime        @db.Date
+  tipo          TipoPermiso
+  conGoceSueldo Boolean         @default(true)
+  horas         Decimal         @db.Decimal(4, 2)
+  motivo        String          @db.Text
+  estado        EstadoSolicitud @default(PENDIENTE)
+  createdAt     DateTime        @default(now())
+}
+
+// ─────────────────────────────────────────────
+// FINIQUITO Y DOCUMENTOS
+// ─────────────────────────────────────────────
+
+model Finiquitos {
+  id                       Int             @id @default(autoincrement())
+  employee                 Employees       @relation(fields: [employeeId], references: [id])
+  employeeId               Int
+  contrato                 Contratos       @relation(fields: [contratoId], references: [id])
+  contratoId               Int
+  fechaTermino             DateTime        @db.Date
+  causal                   CausalFiniquito
+  articuloCodTrabajo       String          @db.VarChar(20)
+  feriadoProporcional      Decimal         @db.Decimal(10, 2)
+  indemnizacionAnios       Decimal         @default(0) @db.Decimal(10, 2)
+  indemnizacionAvisoPrevio Decimal         @default(0) @db.Decimal(10, 2)
+  otrosMontos              Decimal         @default(0) @db.Decimal(10, 2)
+  totalFiniquito           Decimal         @db.Decimal(12, 2)
+  estado                   FiniquitoEstado @default(BORRADOR)
+  fechaFirma               DateTime?       @db.Date
+  documentoUrl             String?         @db.VarChar(300)
+  createdAt                DateTime        @default(now())
+  updatedAt                DateTime        @updatedAt
+}
+
+model DocumentosEmpleado {
+  id          Int                   @id @default(autoincrement())
+  employee    Employees             @relation(fields: [employeeId], references: [id])
+  employeeId  Int
+  tipo        TipoDocumentoEmpleado
+  nombre      String                @db.VarChar(150)
+  url         String                @db.VarChar(300)
+  fechaSubida DateTime              @default(now())
+  subidoPor   Users                 @relation(fields: [subidoPorId], references: [id])
+  subidoPorId Int
+}
+
+/// Libro de Remuneraciones — formato exportable para Dirección del Trabajo (DT) Chile
+model LibroRemuneraciones {
+  id               Int           @id @default(autoincrement())
+  periodo          DateTime      @db.Date
+  employee         Employees     @relation(fields: [employeeId], references: [id])
+  employeeId       Int
+  liquidacion      Liquidaciones @relation(fields: [liquidacionId], references: [id])
+  liquidacionId    Int
+  totalImponible   Decimal       @db.Decimal(12, 2)
+  totalNoImponible Decimal       @db.Decimal(12, 2)
+  totalDescuentos  Decimal       @db.Decimal(12, 2)
+  liquido          Decimal       @db.Decimal(12, 2)
+
+  @@unique([employeeId, periodo])
+  @@index([periodo])
 }
