@@ -16,6 +16,7 @@ import { HealthModule } from './health/health.module';
 import { LocationModule } from './location/location.module';
 import { ReportsModule } from './reports/reports.module';
 import { CompanyModule } from './company/company.module';
+import { RoleModule } from './role/role.module';
 
 
 
@@ -40,6 +41,7 @@ import { CompanyModule } from './company/company.module';
     LocationModule,
     ReportsModule,
     CompanyModule,
+    RoleModule,
   ],
   controllers: [],
   providers: [],

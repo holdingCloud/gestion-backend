@@ -37,7 +37,10 @@ export class ClientRepository {
       const skip = (page - 1) * limit;
       const where: Prisma.ClientsWhereInput = { available: true };
       if (contactStatus) where.contactStatus = contactStatus;
-      if (search) where.fullname = { contains: search, mode: 'insensitive' };
+      if (search) where.OR = [
+        { fullname: { contains: search, mode: 'insensitive' } },
+        { address: { contains: search, mode: 'insensitive' } },
+      ];
       if (communeId) where.communeId = communeId;
       if (regionId) where.commune = { regionId };
       const [clients, total] = await Promise.all([
