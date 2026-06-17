@@ -338,8 +338,8 @@ export class ReportsRepository {
         CASE
           WHEN COUNT(*) FILTER (WHERE b."purchaseStatus" = 'FINALIZADO') = 0 THEN 0
           ELSE ROUND(
-            SUM(b.quantity * b."unitPrice") FILTER (WHERE b."purchaseStatus" = 'FINALIZADO') /
-            COUNT(*) FILTER (WHERE b."purchaseStatus" = 'FINALIZADO'),
+            (SUM(b.quantity * b."unitPrice") FILTER (WHERE b."purchaseStatus" = 'FINALIZADO') /
+            COUNT(*) FILTER (WHERE b."purchaseStatus" = 'FINALIZADO'))::numeric,
             2
           )
         END::float AS "avgTicket"
