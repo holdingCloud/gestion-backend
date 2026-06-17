@@ -2,7 +2,7 @@ import { PrismaClient, ContactStatus } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ log: ['error'] });
 
 interface ClientRecord {
   fullname: string;
