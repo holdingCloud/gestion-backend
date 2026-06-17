@@ -13,9 +13,6 @@ COPY . .
 
 RUN npx prisma generate
 RUN npm run build
-RUN npx tsc --target ES2020 --module CommonJS --esModuleInterop \
-    --moduleResolution node --skipLibCheck --outDir dist/seeds \
-    prisma/seed-clients-prod.ts
 
 FROM node:20-bookworm-slim AS runner
 
@@ -32,11 +29,10 @@ RUN npm prune --omit=dev
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/dist/seeds ./dist/seeds
 
 EXPOSE 3000
 
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/healthcheck', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/seeds/seed-clients-prod.js && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
