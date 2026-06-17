@@ -111,26 +111,40 @@ async function seedClientsProd(): Promise<void> {
   const records = parseSqlFile(sqlPath);
   console.log(`[seed-clients] ${records.length} records found in file.`);
 
+  // Load valid FK ids to avoid constraint violations
+  const [validCommunes, validCompanies] = await Promise.all([
+    prisma.commune.findMany({ select: { id: true } }),
+    prisma.company.findMany({ select: { id: true } }),
+  ]);
+  const communeIds  = new Set(validCommunes.map((c) => c.id));
+  const companyIds  = new Set(validCompanies.map((c) => c.id));
+
   // Build a set of phones and addresses already in the DB
   const existing = await prisma.clients.findMany({
     select: { phone: true, address: true },
   });
-
-  const existingPhones = new Set(
-    existing.map((c) => c.phone.trim()).filter(Boolean),
-  );
-  const existingAddresses = new Set(
-    existing.map((c) => c.address.trim()).filter(Boolean),
-  );
+  const existingPhones    = new Set(existing.map((c) => c.phone.trim()).filter(Boolean));
+  const existingAddresses = new Set(existing.map((c) => c.address.trim()).filter(Boolean));
 
   // A record is "new" if its phone (or address when phone is blank) isn't in the DB
-  const newRecords = records.filter((r) => {
-    const phone = r.phone.trim();
-    if (phone && phone !== ' ') return !existingPhones.has(phone);
-    const addr = r.address.trim();
-    if (addr && addr !== ' ') return !existingAddresses.has(addr);
-    return false; // both blank: skip to avoid meaningless duplicates
-  });
+  const newRecords = records
+    .filter((r) => {
+      const phone = r.phone.trim();
+      if (phone && phone !== ' ') return !existingPhones.has(phone);
+      const addr = r.address.trim();
+      if (addr && addr !== ' ') return !existingAddresses.has(addr);
+      return false;
+    })
+    .map((r) => ({
+      ...r,
+      // Nullify FK references that don't exist in the DB yet
+      communeId: r.communeId !== null && communeIds.has(r.communeId) ? r.communeId : null,
+      companyId: r.companyId !== null && companyIds.has(r.companyId) ? r.companyId : null,
+      // Truncate fields to match column limits
+      phone:   r.phone.trim().slice(0, 15),
+      address: r.address.trim().slice(0, 100),
+      n_depto_casa: r.n_depto_casa ? String(r.n_depto_casa).slice(0, 50) : null,
+    }));
 
   if (newRecords.length === 0) {
     console.log('[seed-clients] No new records to import. Done.');
