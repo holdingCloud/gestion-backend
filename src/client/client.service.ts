@@ -12,12 +12,19 @@ import { ClientNotFoundException } from './exceptions';
 import { PaginatedResponse } from 'src/common/responses/paginated.response';
 import { ContactStatus, PurchaseStatus } from '@prisma/client';
 import { FrequencyStatus } from './enums/frequency-status.enum';
+import { RedisService } from 'src/redis/redis.service';
+
+const CLIENT_ONE_TTL = 120;
+const CLIENT_STATUS_REFRESH_TTL = 3600;
 
 @Injectable()
 export class ClientService {
   private readonly logger = new Logger(ClientService.name);
 
-  constructor(private repo: ClientRepository) {}
+  constructor(
+    private repo: ClientRepository,
+    private redis: RedisService,
+  ) {}
 
   // ─── Clients ────────────────────────────────────────────────────────────────
 
@@ -39,9 +46,10 @@ export class ClientService {
     search?: string,
     communeId?: number,
     regionId?: number,
+    companyId?: number,
   ): Promise<PaginatedResponse<ClientEntity>> {
     try {
-      const { clients, total } = await this.repo.findAll(page, limit, contactStatus, search, communeId, regionId);
+      const { clients, total } = await this.repo.findAll(page, limit, contactStatus, search, communeId, regionId, companyId);
       const refreshed = await Promise.all(clients.map((c) => this.refreshClientStatus(c)));
       return new PaginatedResponse(
         refreshed.map((c) => this.buildClientEntity(c)),
@@ -57,10 +65,16 @@ export class ClientService {
 
   async findOne(id: number): Promise<ClientEntity> {
     try {
+      const cacheKey = `client:one:${id}`;
+      const cached = await this.redis.get(cacheKey);
+      if (cached) return JSON.parse(cached) as ClientEntity;
+
       const client = await this.repo.findOne(id);
       if (!client) throw new ClientNotFoundException(id);
       const refreshed = await this.refreshClientStatus(client);
-      return this.buildClientEntity(refreshed);
+      const entity = this.buildClientEntity(refreshed);
+      await this.redis.set(cacheKey, JSON.stringify(entity), CLIENT_ONE_TTL);
+      return entity;
     } catch (error: any) {
       if (error instanceof ClientNotFoundException) throw error;
       this.logger.error(`Failed to fetch client ${id}: ${error.message}`, error.stack);
@@ -73,6 +87,7 @@ export class ClientService {
       const existing = await this.repo.findOne(id);
       if (!existing) throw new ClientNotFoundException(id);
       const client = await this.repo.update(id, updateClientDto);
+      await this.invalidateClientCache(id);
       return new ClientEntity({ ...client! });
     } catch (error: any) {
       if (error instanceof ClientNotFoundException) throw error;
@@ -86,6 +101,7 @@ export class ClientService {
       const existing = await this.repo.findOne(id);
       if (!existing) throw new ClientNotFoundException(id);
       const client = await this.repo.updateContactStatus(id, dto.contactStatus);
+      await this.invalidateClientCache(id);
       return new ClientEntity({ ...client });
     } catch (error: any) {
       if (error instanceof ClientNotFoundException) throw error;
@@ -99,6 +115,7 @@ export class ClientService {
       const existing = await this.repo.findOne(id);
       if (!existing) throw new ClientNotFoundException(id);
       const client = await this.repo.remove(id);
+      await this.invalidateClientCache(id);
       return new ClientEntity({ ...client });
     } catch (error: any) {
       if (error instanceof ClientNotFoundException) throw error;
@@ -149,6 +166,7 @@ export class ClientService {
 
       if (dto.purchaseStatus === PurchaseStatus.FINALIZADO) {
         await this.applyFinalizePurchase(clientId, purchase);
+        await this.invalidateClientCache(clientId);
       }
 
       this.logger.log(`Purchase ${purchaseId} → ${dto.purchaseStatus} for client ${clientId}`);
@@ -245,6 +263,12 @@ export class ClientService {
     if (!avg) return client;
 
     const frequencies: any[] = client.clientProductFrequencies ?? [];
+    if (!frequencies.length) return client;
+
+    const throttleKey = `client:status:refreshed:${client.id}`;
+    const alreadyRefreshed = await this.redis.get(throttleKey);
+    if (alreadyRefreshed) return client;
+
     const latest = frequencies
       .filter((f) => f.actualPurchaseDate)
       .sort((a, b) => new Date(b.actualPurchaseDate).getTime() - new Date(a.actualPurchaseDate).getTime())[0];
@@ -263,12 +287,21 @@ export class ClientService {
       newStatus = ContactStatus.LLAMAR;
     }
 
+    await this.redis.set(throttleKey, '1', CLIENT_STATUS_REFRESH_TTL);
+
     if (newStatus !== client.contactStatus) {
       await this.repo.updateContactStatus(client.id, newStatus);
       return { ...client, contactStatus: newStatus };
     }
 
     return client;
+  }
+
+  private async invalidateClientCache(id: number): Promise<void> {
+    await Promise.all([
+      this.redis.del(`client:one:${id}`),
+      this.redis.del(`client:status:refreshed:${id}`),
+    ]);
   }
 
   private buildClientEntity(client: any): ClientEntity {
