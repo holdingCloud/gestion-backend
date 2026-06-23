@@ -7,6 +7,7 @@ import {
   ApiUnauthorizedResponse,
   ApiBadRequestResponse,
   ApiHeader,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { LoginDto } from 'src/auth/dto';
 
@@ -34,6 +35,23 @@ export const LoginDocs = () =>
     ApiOkResponse({ description: 'Login exitoso. Retorna accessToken y refreshToken' }),
     ApiBadRequestResponse({ description: 'Datos de entrada inválidos' }),
     ApiUnauthorizedResponse({ description: 'Credenciales incorrectas' }),
+  );
+
+export const LogoutDocs = () =>
+  applyDecorators(
+    ApiBearerAuth(),
+    ApiOperation({
+      summary: 'Cerrar sesión',
+      description:
+        'Invalida la sesión activa del usuario en Redis. Cualquier request posterior con el mismo token será rechazado.',
+    }),
+    ApiOkResponse({
+      description: 'Sesión cerrada correctamente',
+      schema: {
+        example: { message: 'Sesión cerrada correctamente' },
+      },
+    }),
+    ApiUnauthorizedResponse({ description: 'Token inválido o sesión ya expirada' }),
   );
 
 export const RefreshTokenDocs = () =>

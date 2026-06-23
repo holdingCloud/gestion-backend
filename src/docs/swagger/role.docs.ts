@@ -23,9 +23,9 @@ export const CreateRoleDocs = () =>
     ApiBody({
       type: CreateRoleDto,
       examples: {
-        admin: { summary: 'Administrador', value: { type: 'ADMINISTRADOR' } },
-        repartidor: { summary: 'Repartidor', value: { type: 'REPARTIDOR' } },
-        comun: { summary: 'Común', value: { type: 'COMUN' } },
+        admin: { summary: 'Rol estándar', value: { type: 'ADMINISTRADOR' } },
+        custom: { summary: 'Rol personalizado', value: { type: 'BODEGUERO' } },
+        supervisor: { summary: 'Rol personalizado 2', value: { type: 'SUPERVISOR_VENTAS' } },
       },
     }),
     ApiCreatedResponse({ description: 'Role created successfully' }),

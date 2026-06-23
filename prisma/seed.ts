@@ -1,4 +1,4 @@
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, Modulo } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 
 const prisma = new PrismaClient();
@@ -8,24 +8,24 @@ type SeedUser = {
   fullName: string;
   password: string;
   imagen: string;
-  type: 'ADMINISTRADOR' | 'REPARTIDOR' | 'COMUN';
+  type: 'SUPER_ADMIN' | 'ADMINISTRADOR' | 'REPARTIDOR' | 'COMUN';
 };
 
 const users: SeedUser[] = [
+  {
+    email: 'superadmin@local.test',
+    fullName: 'Super Administrador',
+    password: 'Super1234',
+    imagen: 'default-admin.png',
+    type: 'SUPER_ADMIN',
+  },
   {
     email: 'admin@local.test',
     fullName: 'Admin Principal',
     password: 'Admin1234',
     imagen: 'default-admin.png',
     type: 'ADMINISTRADOR',
-  },
-  {
-    email: 'user@local.test',
-    fullName: 'Usuario Comun',
-    password: 'User1234',
-    imagen: 'default-user.png',
-    type: 'COMUN',
-  },
+  }
 ];
 
 const regionsData = [
@@ -177,17 +177,19 @@ const regionsData = [
 ];
 
 async function seedRoles() {
-  const roles = await prisma.roles.findMany();
-  if (roles.length === 0) {
-    const types: ('ADMINISTRADOR' | 'REPARTIDOR' | 'COMUN')[] = [
-      'ADMINISTRADOR',
-      'REPARTIDOR',
-      'COMUN',
-    ];
-    for (const type of types) {
-      await prisma.roles.create({ data: { type } });
-      console.log(`✅ Rol ${type} creado`);
-    }
+  const types: ('SUPER_ADMIN' | 'ADMINISTRADOR' | 'REPARTIDOR' | 'COMUN')[] = [
+    'SUPER_ADMIN',
+    'ADMINISTRADOR',
+    'REPARTIDOR',
+    'COMUN',
+  ];
+  for (const type of types) {
+    await prisma.roles.upsert({
+      where: { type },
+      create: { type },
+      update: {},
+    });
+    console.log(`✅ Rol ${type} creado/verificado`);
   }
 }
 
@@ -256,10 +258,40 @@ async function seedRegionsAndCommunes() {
   }
 }
 
+const modulosPorRol: Record<string, Modulo[]> = {
+  SUPER_ADMIN: [
+    Modulo.DASHBOARD, Modulo.USUARIOS, Modulo.CLIENTES, Modulo.RRHH,
+    Modulo.INVENTARIO, Modulo.COMPRAS, Modulo.PROVEEDORES, Modulo.CUENTAS,
+    Modulo.HOJA_DE_VENTA, Modulo.REPORTES, Modulo.EMPRESAS,
+  ],
+  ADMINISTRADOR: [
+    Modulo.DASHBOARD, Modulo.USUARIOS, Modulo.CLIENTES, Modulo.RRHH,
+    Modulo.INVENTARIO, Modulo.COMPRAS, Modulo.PROVEEDORES, Modulo.CUENTAS,
+    Modulo.HOJA_DE_VENTA, Modulo.REPORTES, Modulo.EMPRESAS,
+  ],
+  REPARTIDOR: [Modulo.HOJA_DE_VENTA],
+  COMUN:      [Modulo.CLIENTES, Modulo.HOJA_DE_VENTA],
+};
+
+async function seedRolModulos() {
+  for (const [type, modulos] of Object.entries(modulosPorRol)) {
+    const rol = await prisma.roles.findUnique({ where: { type: type as any } });
+    if (!rol) continue;
+    await prisma.$transaction(async (tx) => {
+      await tx.rolModulo.deleteMany({ where: { rolId: rol.id } });
+      await tx.rolModulo.createMany({
+        data: modulos.map((modulo) => ({ rolId: rol.id, modulo })),
+      });
+    });
+    console.log(`✅ Módulos asignados a ${type}: ${modulos.join(', ')}`);
+  }
+}
+
 async function main() {
   console.log('🌱 Iniciando seed...');
 
   await seedRoles();
+  await seedRolModulos();
   await seedUsers();
 
   console.log('🌱 Iniciando seed de regiones y comunas...');

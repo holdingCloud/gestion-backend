@@ -7,12 +7,14 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { JwtRefreshStrategy } from './strategies/refresh.strategy';
 import { envs } from 'src/config';
 import { UserModule } from 'src/user/user.module';
+import { RedisModule } from 'src/redis/redis.module';
 
 @Module({
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, JwtRefreshStrategy],
   imports: [
     UserModule,
+    RedisModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
       global: true,

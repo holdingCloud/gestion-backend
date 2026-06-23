@@ -13,6 +13,7 @@ COPY . .
 
 RUN npx prisma generate
 RUN npm run build
+RUN npx tsc -p tsconfig.seed.json
 
 FROM node:20-bookworm-slim AS runner
 
@@ -35,4 +36,4 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/healthcheck', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && node dist/src/main.js"]

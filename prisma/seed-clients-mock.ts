@@ -22,7 +22,7 @@ function sortByDate(dates: Date[]): Date[] {
 
 // ─── Datos mock ──────────────────────────────────────────────────────────────
 
-const MOCK_CLIENTS = [
+const MOCK_CLIENTS: { fullname: string; phone: string; email: string; address: string; n_depto_casa?: string; referencia?: string }[] = [
   { fullname: 'Valentina Morales Reyes',   address: 'Av. Providencia 1250',       n_depto_casa: 'Dpto 4B',     phone: '+56912340001', email: 'valentina.morales@mock.cl',   referencia: 'Frente a la farmacia' },
   { fullname: 'Rodrigo Fuentes Castillo',  address: 'Los Nogales 85',             phone: '+56912340002', email: 'rodrigo.fuentes@mock.cl' },
   { fullname: 'Camila Torres Vega',        address: 'Calle Ñuble 420',            n_depto_casa: 'Casa 3',      phone: '+56912340003', email: 'camila.torres@mock.cl' },
@@ -157,12 +157,20 @@ async function seedClientsMock() {
 
     // Crear cliente
     const communeId = communeIds.length > 0 ? pick(communeIds) : undefined;
+    const { address, n_depto_casa, referencia, ...clientFields } = clientData;
     const client = await prisma.clients.create({
+      data: { ...clientFields, available: true, contactStatus: ContactStatus.LLAMAR },
+    });
+    // Crear dirección principal en Direcciones
+    await (prisma as any).direcciones.create({
       data: {
-        ...clientData,
+        tipo: 'PRINCIPAL',
+        calle: address,
+        departamento: n_depto_casa ?? null,
+        referencia: referencia ?? null,
         communeId: communeId ?? null,
-        available: true,
-        contactStatus: ContactStatus.LLAMAR,
+        principal: true,
+        clientId: client.id,
       },
     });
     createdClients++;

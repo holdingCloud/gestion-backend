@@ -15,10 +15,10 @@ export class EmployeeService {
   async create(createEmployeeDto: CreateEmployeeDto): Promise<EmployeeEntity> {
     try {
       const employee = await this.repo.create(createEmployeeDto);
-      this.logger.log(`Employee created successfully with id: ${employee.id}`);
+      this.logger.log(`Employee created successfully with id: ${employee!.id}`);
       return new EmployeeEntity({
-        ...employee,
-        available: employee.available ?? undefined,
+        ...employee!,
+        available: employee!.available ?? undefined,
       });
     } catch (error) {
       this.logger.error(`Failed to create employee: ${error.message}`, error.stack);
@@ -34,7 +34,7 @@ export class EmployeeService {
       const { employees, total } = await this.repo.findAll(page, limit);
       const mappedEmployees = employees.map((employee) =>
         new EmployeeEntity({
-          ...employee,
+          ...(employee as any),
           available: employee.available ?? undefined,
         }),
       );
@@ -52,7 +52,7 @@ export class EmployeeService {
         throw new EmployeeNotFoundException(id);
       }
       return new EmployeeEntity({
-        ...employee,
+        ...(employee as any),
         available: employee.available ?? undefined,
       });
     } catch (error) {
@@ -77,8 +77,8 @@ export class EmployeeService {
       const employee = await this.repo.update(id, updateEmployeeDto);
       this.logger.log(`Employee updated successfully with id: ${id}`);
       return new EmployeeEntity({
-        ...employee,
-        available: employee.available ?? undefined,
+        ...(employee as any),
+        available: employee!.available ?? undefined,
       });
     } catch (error) {
       if (error instanceof EmployeeNotFoundException) {
@@ -102,7 +102,7 @@ export class EmployeeService {
       const employee = await this.repo.remove(id);
       this.logger.log(`Employee deleted successfully with id: ${id}`);
       return new EmployeeEntity({
-        ...employee,
+        ...(employee as any),
         available: employee.available ?? undefined,
       });
     } catch (error) {

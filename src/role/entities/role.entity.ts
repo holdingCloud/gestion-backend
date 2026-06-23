@@ -1,8 +1,6 @@
-import { typePosition } from '@prisma/client';
-
 export class RoleEntity {
   id!: number;
-  type!: typePosition;
+  type!: string;
   createdAt!: Date;
   updatedAt!: Date;
   _count?: { user: number };

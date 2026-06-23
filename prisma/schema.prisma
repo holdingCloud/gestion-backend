@@ -14,9 +14,19 @@ datasource db {
 }
 
 enum typePosition {
+  SUPER_ADMIN
   ADMINISTRADOR
-  REPARTIDOR
-  COMUN
+}
+
+enum TiposDireccion {
+  PRINCIPAL
+  FACTURACION
+  DESPACHO
+  COMERCIAL
+  TRABAJO
+  SUCURSAL
+  BODEGA
+  OTRO
 }
 
 enum ContactStatus {
@@ -54,11 +64,37 @@ model Users {
 
 
 model Roles {
-  id        Int      @id @default(autoincrement())
-  type      typePosition @unique
+  id        Int         @id @default(autoincrement())
+  type      String      @unique @db.VarChar(50)
   user      Users[]
+  modulos   RolModulo[]
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+}
+
+enum Modulo {
+  DASHBOARD
+  USUARIOS
+  CLIENTES
+  RRHH
+  INVENTARIO
+  COMPRAS
+  PROVEEDORES
+  CUENTAS
+  HOJA_DE_VENTA
+  REPORTES
+  EMPRESAS
+}
+
+model RolModulo {
+  id        Int      @id @default(autoincrement())
+  rolId     Int
+  modulo    Modulo
+  rol       Roles    @relation(fields: [rolId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+
+  @@unique([rolId, modulo])
+  @@index([rolId])
 }
 
 model Products {
@@ -87,36 +123,57 @@ model Region {
 }
 
 model Commune {
-  id        Int       @id @default(autoincrement())
-  name      String    @db.VarChar(100)
-  region    Region    @relation(fields: [regionId], references: [id])
-  regionId  Int
-  clients   Clients[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id          Int           @id @default(autoincrement())
+  name        String        @db.VarChar(100)
+  region      Region        @relation(fields: [regionId], references: [id])
+  regionId    Int
+  direcciones Direcciones[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model Direcciones {
+  id           Int            @id @default(autoincrement())
+  tipo         TiposDireccion
+  calle        String         @db.VarChar(200)
+  numero       String?        @db.VarChar(20)
+  departamento String?        @db.VarChar(50)
+  referencia   String?        @db.VarChar(200)
+  commune      Commune?       @relation(fields: [communeId], references: [id])
+  communeId    Int?
+  latitud      Decimal?       @db.Decimal(10, 8)
+  longitud     Decimal?       @db.Decimal(11, 8)
+  client       Clients?
+  employee     Employees?
+  company      Company?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([communeId])
+  @@index([tipo])
 }
 
 model Company {
-  id          Int       @id @default(autoincrement())
-  name        String    @db.VarChar(150)
-  description String?   @db.VarChar(500)
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(150)
+  description String?      @db.VarChar(500)
   clients     Clients[]
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  direccionId Int?         @unique
+  direccion   Direcciones? @relation(fields: [direccionId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 }
 
 model Clients {
   id                       Int                      @id @default(autoincrement())
   fullname                 String                   @db.VarChar(150)
-  address                  String                   @db.VarChar(100)
-  n_depto_casa             String?                  @db.VarChar(50)
-  referencia               String?                  @db.VarChar(200)
   phone                    String                   @db.VarChar(15)
+  phone2                   String?                  @db.VarChar(15)
   email                    String                   @db.VarChar(100)
-  commune                  Commune?                 @relation(fields: [communeId], references: [id])
-  communeId                Int?
   company                  Company?                 @relation(fields: [companyId], references: [id])
   companyId                Int?
+  direccionId              Int?                     @unique
+  direccion                Direcciones?             @relation(fields: [direccionId], references: [id])
   detailsSalesSheets       detailsSalesSheet[]
   buysByClient             buyByClient[]
   clientProductFrequencies ClientProductFrequency[]
@@ -167,19 +224,19 @@ model ClientProductFrequency {
 }
 
 model Employees {
-  id          Int           @id @default(autoincrement())
-  rut         String        @db.VarChar(20)
-  fullname    String        @db.VarChar(150)
-  email       String        @db.VarChar(100)
+  id          Int          @id @default(autoincrement())
+  rut         String       @db.VarChar(20)
+  fullname    String       @db.VarChar(150)
+  email       String       @db.VarChar(100)
   salary      Int
-  hireDate    String        @db.VarChar(20)
-  city        String        @db.VarChar(50)
-  address     String        @db.VarChar(100)
-  available   Boolean       @default(true)
-  type        typePosition  @default(COMUN)
+  hireDate    String       @db.VarChar(20)
+  available   Boolean      @default(true)
+  type        typePosition @default(ADMINISTRADOR)
   salesSheets salesSheets[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  direccionId Int?         @unique
+  direccion   Direcciones? @relation(fields: [direccionId], references: [id])
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
   @@index([available])
 }

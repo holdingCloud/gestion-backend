@@ -28,7 +28,7 @@ export class UserService {
         isActive: users.isActive ?? undefined,
         isLoged: users.isLoged ?? undefined,
       });
-    } catch (error) {
+    } catch (error: any) {
      if (error instanceof Error) {
     throw new BadRequestException(error.message);
   }
@@ -50,7 +50,7 @@ export class UserService {
           }),
       );
       return new PaginatedResponse(mappedUsers, total, page, limit);
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof Error) {
         throw new BadRequestException(error.message);
       }
@@ -73,7 +73,7 @@ export class UserService {
         isActive: user.isActive ?? undefined,
         isLoged: user.isLoged ?? undefined,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof UserNotFoundException) {
         throw error;
       }
@@ -104,7 +104,7 @@ export class UserService {
         isActive: user.isActive ?? undefined,
         isLoged: user.isLoged ?? undefined,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof UserNotFoundException) {
         throw error;
       }
@@ -132,7 +132,7 @@ export class UserService {
         isActive: user.isActive ?? undefined,
         isLoged: user.isLoged ?? undefined,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof UserNotFoundException) {
         throw error;
       }
@@ -150,13 +150,18 @@ export class UserService {
       if (!user) {
         throw new UserNotFoundException(email);
       }
+      const modulos: string[] = Array.isArray((user.rol as any)?.modulos)
+        ? (user.rol as any).modulos.map((m: any) => m.modulo)
+        : [];
       return new UserEntity({
         ...user,
+        rolesId: user.rolesId,
+        modulos,
         rol: typeof user.rol === 'object' ? user.rol.type.toString() : user.rol,
         isActive: user.isActive ?? undefined,
         isLoged: user.isLoged ?? undefined,
       });
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof UserNotFoundException) {
         throw error;
       }

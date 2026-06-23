@@ -32,9 +32,12 @@ export const CreateEmployeeDocs = () =>
             email: 'carlos.munoz@empresa.com',
             salary: 650000,
             hireDate: '2024-03-15',
-            city: 'Valparaíso',
-            address: 'Calle Brasil 321',
             type: 'REPARTIDOR',
+            direccionPrincipal: {
+              calle: 'Calle Brasil',
+              numero: '321',
+              communeId: 1,
+            },
           },
         },
         administrador: {
@@ -45,9 +48,12 @@ export const CreateEmployeeDocs = () =>
             email: 'laura.vega@empresa.com',
             salary: 1200000,
             hireDate: '2023-01-10',
-            city: 'Santiago',
-            address: 'Av. Providencia 500',
             type: 'ADMINISTRADOR',
+            direccionPrincipal: {
+              calle: 'Av. Providencia',
+              numero: '500',
+              communeId: 1,
+            },
           },
         },
       },
@@ -83,16 +89,14 @@ export const UpdateEmployeeDocs = () =>
       type: UpdateEmployeeDto,
       examples: {
         actualizarSalario: {
-          summary: 'Actualizar salario y ciudad',
+          summary: 'Actualizar salario y dirección',
           value: {
-            rut: '12.345.678-9',
-            fullname: 'Carlos Muñoz',
-            email: 'carlos.munoz@empresa.com',
             salary: 750000,
-            hireDate: '2024-03-15',
-            city: 'Santiago',
-            address: 'Av. Grecia 1020',
-            type: 'REPARTIDOR',
+            direccionPrincipal: {
+              calle: 'Av. Grecia',
+              numero: '1020',
+              communeId: 1,
+            },
           },
         },
       },

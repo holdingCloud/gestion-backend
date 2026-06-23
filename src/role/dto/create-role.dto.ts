@@ -1,10 +1,10 @@
-import { IsEnum, IsNotEmpty } from 'class-validator';
+import { IsString, IsNotEmpty, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { typePosition } from '@prisma/client';
 
 export class CreateRoleDto {
-  @ApiProperty({ enum: typePosition, description: 'Tipo de posición del rol' })
-  @IsEnum(typePosition)
+  @ApiProperty({ type: String, description: 'Nombre único del rol (ej: ADMINISTRADOR, BODEGUERO, SUPERVISOR)' })
+  @IsString()
   @IsNotEmpty()
-  type!: typePosition;
+  @MaxLength(50)
+  type!: string;
 }
