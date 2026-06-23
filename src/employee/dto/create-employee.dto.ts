@@ -7,7 +7,10 @@ import {
 	IsOptional,
 	IsString,
 	Min,
+	ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { DireccionPrincipalDto } from 'src/client/dto/create-client.dto';
 
 export class CreateEmployeeDto {
 	@IsString()
@@ -30,15 +33,12 @@ export class CreateEmployeeDto {
 	@IsNotEmpty()
 	hireDate: string;
 
-	@IsString()
-	@IsNotEmpty()
-	city: string;
-
-	@IsString()
-	@IsNotEmpty()
-	address: string;
-
 	@IsOptional()
 	@IsEnum(typePosition)
 	type?: typePosition;
+
+	@IsOptional()
+	@ValidateNested()
+	@Type(() => DireccionPrincipalDto)
+	direccionPrincipal?: DireccionPrincipalDto;
 }

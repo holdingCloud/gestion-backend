@@ -24,8 +24,8 @@ export class ClientService {
   async create(createClientDto: CreateClientDto): Promise<ClientEntity> {
     try {
       const client = await this.repo.create(createClientDto);
-      this.logger.log(`Client created with id: ${client.id}`);
-      return new ClientEntity({ ...client });
+      this.logger.log(`Client created with id: ${client!.id}`);
+      return new ClientEntity({ ...client! });
     } catch (error: any) {
       this.logger.error(`Failed to create client: ${error.message}`, error.stack);
       throw error;
@@ -73,7 +73,7 @@ export class ClientService {
       const existing = await this.repo.findOne(id);
       if (!existing) throw new ClientNotFoundException(id);
       const client = await this.repo.update(id, updateClientDto);
-      return new ClientEntity({ ...client });
+      return new ClientEntity({ ...client! });
     } catch (error: any) {
       if (error instanceof ClientNotFoundException) throw error;
       this.logger.error(`Failed to update client ${id}: ${error.message}`, error.stack);

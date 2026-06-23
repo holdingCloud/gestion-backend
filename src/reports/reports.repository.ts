@@ -19,7 +19,7 @@ export class ReportsRepository {
 
   async getSalesByProduct(startDate?: string, endDate?: string, communeId?: number, period: ReportPeriod = ReportPeriod.DAY, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
-    const communeFilter  = communeId  ? Prisma.sql`AND c."communeId"  = ${communeId}`  : Prisma.empty;
+    const communeFilter  = communeId  ? Prisma.sql`AND d."communeId"  = ${communeId}`  : Prisma.empty;
     const companyFilter  = companyId  ? Prisma.sql`AND c."companyId"  = ${companyId}`  : Prisma.empty;
     const truncUnit = Prisma.raw(`'${period}'`);
 
@@ -44,6 +44,7 @@ export class ReportsRepository {
         FROM "buyByClient" b
         JOIN "Products" p ON b."productsId" = p.id
         JOIN "Clients"  c ON b."clientsId"  = c.id
+        LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
         WHERE b."purchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
         ${companyFilter}
@@ -58,6 +59,7 @@ export class ReportsRepository {
           COUNT(*) FILTER (WHERE b."purchaseStatus" = 'ANULADO')::int    AS "canceled"
         FROM "buyByClient" b
         JOIN "Clients" c ON b."clientsId" = c.id
+        LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
         WHERE b."purchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
         ${companyFilter}
@@ -78,7 +80,7 @@ export class ReportsRepository {
     companyId?: number,
   ) {
     const { start, end } = this.buildDateRange(startDate, endDate);
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
     const clientFilter  = clientId  ? Prisma.sql`AND c.id = ${clientId}`           : Prisma.empty;
     const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
@@ -104,7 +106,8 @@ export class ReportsRepository {
         )::float AS "totalAmount"
       FROM "Clients" c
       LEFT JOIN "buyByClient" b ON b."clientsId" = c.id
-      LEFT JOIN "Commune" co ON c."communeId" = co.id
+      LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
+      LEFT JOIN "Commune" co ON d."communeId" = co.id
       LEFT JOIN "Company" comp ON c."companyId" = comp.id
       LEFT JOIN (
         SELECT "clientsId", ROUND(AVG("avgDaysBetweenPurchases"), 1)::float AS "avgDaysBetweenPurchases"
@@ -122,7 +125,7 @@ export class ReportsRepository {
 
   async getSalesEvolution(startDate?: string, endDate?: string, communeId?: number, period: ReportPeriod = ReportPeriod.DAY, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
     const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
     const truncUnit = Prisma.raw(`'${period}'`);
 
@@ -136,6 +139,7 @@ export class ReportsRepository {
         )::float AS "totalAmount"
       FROM "buyByClient" b
       JOIN "Clients" c ON b."clientsId" = c.id
+      LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
       WHERE b."purchaseDate" BETWEEN ${start} AND ${end}
       ${communeFilter}
       ${companyFilter}
@@ -154,6 +158,7 @@ export class ReportsRepository {
           COUNT(*)::int AS "txCount"
         FROM "buyByClient" b
         JOIN "Clients" c ON b."clientsId" = c.id
+        LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
         WHERE b."purchaseStatus" = 'FINALIZADO'
           AND b."purchaseDate" BETWEEN ${start} AND ${end}
         ${communeFilter}
@@ -165,6 +170,7 @@ export class ReportsRepository {
           COUNT(*)::int AS "txCount"
         FROM "buyByClient" b
         JOIN "Clients" c ON b."clientsId" = c.id
+        LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
         WHERE b."purchaseStatus" = 'FINALIZADO'
           AND b."purchaseDate" BETWEEN ${prevStart} AND ${prevEnd}
         ${communeFilter}
@@ -200,7 +206,7 @@ export class ReportsRepository {
   }
 
   async getInactiveClients(communeId?: number, companyId?: number) {
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
     const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     return this.prisma.$queryRaw<any[]>`
@@ -214,7 +220,8 @@ export class ReportsRepository {
         ROUND(AVG(cpf."avgDaysBetweenPurchases"), 1)::float             AS "avgDaysBetweenPurchases",
         EXTRACT(DAY FROM NOW() - MAX(cpf."actualPurchaseDate"))::int     AS "daysSinceLastPurchase"
       FROM "Clients" c
-      LEFT JOIN "Commune" co ON c."communeId" = co.id
+      LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
+      LEFT JOIN "Commune" co ON d."communeId" = co.id
       LEFT JOIN "Company" comp ON c."companyId" = comp.id
       LEFT JOIN "ClientProductFrequency" cpf ON cpf."clientsId" = c.id
       WHERE c.available = true
@@ -229,7 +236,7 @@ export class ReportsRepository {
 
   async getTopClients(startDate?: string, endDate?: string, communeId?: number, limit: number = 10, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
     const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     return this.prisma.$queryRaw<any[]>`
@@ -246,7 +253,8 @@ export class ReportsRepository {
         )::float AS "totalAmount",
         COUNT(b.id) FILTER (WHERE b."purchaseStatus" = 'FINALIZADO')::int AS "purchaseCount"
       FROM "Clients" c
-      LEFT JOIN "Commune" co ON c."communeId" = co.id
+      LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
+      LEFT JOIN "Commune" co ON d."communeId" = co.id
       LEFT JOIN "Company" comp ON c."companyId" = comp.id
       LEFT JOIN (
         SELECT "clientsId", ROUND(AVG("avgDaysBetweenPurchases"), 1)::float AS "avgDaysBetweenPurchases"
@@ -268,7 +276,7 @@ export class ReportsRepository {
 
   async getAvgPurchaseFrequency(startDate?: string, endDate?: string, communeId?: number, companyId?: number) {
     const { start, end } = this.buildDateRange(startDate, endDate);
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
     const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     const [avgResult, histogram] = await Promise.all([
@@ -276,6 +284,7 @@ export class ReportsRepository {
         SELECT ROUND(AVG(cpf."avgDaysBetweenPurchases"), 2)::float AS "globalAvg"
         FROM "ClientProductFrequency" cpf
         JOIN "Clients" c ON cpf."clientsId" = c.id
+        LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
         WHERE cpf."avgDaysBetweenPurchases" IS NOT NULL
           AND c.available = true
           AND cpf."actualPurchaseDate" BETWEEN ${start} AND ${end}
@@ -301,6 +310,7 @@ export class ReportsRepository {
           COUNT(DISTINCT cpf."clientsId")::int AS "clientCount"
         FROM "ClientProductFrequency" cpf
         JOIN "Clients" c ON cpf."clientsId" = c.id
+        LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
         WHERE cpf."avgDaysBetweenPurchases" IS NOT NULL
           AND c.available = true
           AND cpf."actualPurchaseDate" BETWEEN ${start} AND ${end}
@@ -324,7 +334,7 @@ export class ReportsRepository {
     const prevStart = new Date(dayStart.getTime() - 86_400_000);
     const prevEnd   = new Date(dayEnd.getTime()   - 86_400_000);
 
-    const communeFilter = communeId ? Prisma.sql`AND c."communeId" = ${communeId}` : Prisma.empty;
+    const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
     const companyFilter = companyId ? Prisma.sql`AND c."companyId" = ${companyId}` : Prisma.empty;
 
     const metricsQuery = (s: Date, e: Date) => this.prisma.$queryRaw<any[]>`
@@ -345,6 +355,7 @@ export class ReportsRepository {
         END::float AS "avgTicket"
       FROM "buyByClient" b
       JOIN "Clients" c ON b."clientsId" = c.id
+      LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
       WHERE b."purchaseDate" BETWEEN ${s} AND ${e}
       ${communeFilter}
       ${companyFilter}
@@ -353,6 +364,7 @@ export class ReportsRepository {
     const newClientsQuery = (s: Date, e: Date) => this.prisma.$queryRaw<{ count: number }[]>`
       SELECT COUNT(*)::int AS count
       FROM "Clients" c
+      LEFT JOIN "Direcciones" d ON d.id = c."direccionId"
       WHERE c."createdAt" BETWEEN ${s} AND ${e}
         AND c.available = true
       ${communeFilter}

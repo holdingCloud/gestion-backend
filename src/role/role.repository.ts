@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, ConflictException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
+import { Prisma } from '@prisma/client';
 import { CreateRoleDto } from './dto/create-role.dto';
 import { UpdateRoleDto } from './dto/update-role.dto';
 
@@ -11,8 +12,11 @@ export class RoleRepository {
 
   async create(data: CreateRoleDto) {
     try {
-      return await this.prisma.roles.create({ data });
+      return await this.prisma.roles.create({ data: data as any });
     } catch (error: any) {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        throw new ConflictException(`El rol '${data.type}' ya existe`);
+      }
       this.logger.error(`Error creating role: ${error.message}`, error.stack);
       throw error;
     }
@@ -44,7 +48,7 @@ export class RoleRepository {
 
   async update(id: number, data: UpdateRoleDto) {
     try {
-      return await this.prisma.roles.update({ where: { id }, data });
+      return await this.prisma.roles.update({ where: { id }, data: data as any });
     } catch (error: any) {
       this.logger.error(`Error updating role ${id}: ${error.message}`, error.stack);
       throw error;

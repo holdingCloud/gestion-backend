@@ -5,6 +5,15 @@ import { UpdateClientDto } from './dto/update-client.dto';
 import { Prisma, ContactStatus, PurchaseStatus, FrequencyStatus } from '@prisma/client';
 import { ClientAlreadyExistsException } from './exceptions';
 
+const clientInclude = {
+  company: { select: { id: true, name: true, description: true } },
+  direccion: { include: { commune: { select: { id: true, name: true, regionId: true } } } },
+  clientProductFrequencies: {
+    include: { product: { select: { id: true, name: true, code: true } } },
+    orderBy: { actualPurchaseDate: 'desc' as const },
+  },
+} as any;
+
 @Injectable()
 export class ClientRepository {
   private readonly logger = new Logger(ClientRepository.name);
@@ -15,9 +24,24 @@ export class ClientRepository {
 
   async create(data: CreateClientDto) {
     try {
-      return await this.prisma.clients.create({ data: { ...data, available: true } as any });
+      const { direccionPrincipal, ...clientData } = data;
+      return await this.prisma.$transaction(async (tx) => {
+        let direccionId: number | undefined;
+        if (direccionPrincipal) {
+          const dir = await tx.direcciones.create({
+            data: { ...direccionPrincipal, tipo: 'PRINCIPAL' },
+          });
+          direccionId = dir.id;
+        }
+        const client = await tx.clients.create({
+          data: { ...clientData, available: true, ...(direccionId ? { direccionId } : {}) } as any,
+        });
+        return tx.clients.findUnique({ where: { id: client.id }, include: clientInclude });
+      });
     } catch (error: any) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const target = (error.meta?.target as string[])?.join(', ') ?? 'campo desconocido';
+        this.logger.error(`P2002 unique constraint violated on: ${target}`);
         throw new ClientAlreadyExistsException(data.email);
       }
       this.logger.error(`Error creating client: ${error.message}`, error.stack);
@@ -35,28 +59,16 @@ export class ClientRepository {
   ) {
     try {
       const skip = (page - 1) * limit;
-      const where: Prisma.ClientsWhereInput = { available: true };
+      const where: any = { available: true };
       if (contactStatus) where.contactStatus = contactStatus;
       if (search) where.OR = [
         { fullname: { contains: search, mode: 'insensitive' } },
-        { address: { contains: search, mode: 'insensitive' } },
+        { direccion: { calle: { contains: search, mode: 'insensitive' } } },
       ];
-      if (communeId) where.communeId = communeId;
-      if (regionId) where.commune = { regionId };
+      if (communeId) where.direccion = { communeId };
+      if (regionId) where.direccion = { commune: { regionId } };
       const [clients, total] = await Promise.all([
-        this.prisma.clients.findMany({
-          where,
-          skip,
-          take: limit,
-          include: {
-            commune: { select: { id: true, name: true, regionId: true } },
-            company: { select: { id: true, name: true, description: true } },
-            clientProductFrequencies: {
-              include: { product: { select: { id: true, name: true, code: true } } },
-              orderBy: { actualPurchaseDate: 'desc' },
-            },
-          },
-        }),
+        this.prisma.clients.findMany({ where, skip, take: limit, include: clientInclude }),
         this.prisma.clients.count({ where }),
       ]);
       return { clients, total };
@@ -68,17 +80,7 @@ export class ClientRepository {
 
   async findOne(id: number) {
     try {
-      return await this.prisma.clients.findUnique({
-        where: { id },
-        include: {
-          commune: { select: { id: true, name: true, regionId: true } },
-          company: { select: { id: true, name: true, description: true } },
-          clientProductFrequencies: {
-            include: { product: { select: { id: true, name: true, code: true } } },
-            orderBy: { actualPurchaseDate: 'desc' },
-          },
-        },
-      });
+      return await this.prisma.clients.findUnique({ where: { id }, include: clientInclude });
     } catch (error: any) {
       this.logger.error(`Error fetching client with id ${id}: ${error.message}`, error.stack);
       throw error;
@@ -87,7 +89,20 @@ export class ClientRepository {
 
   async update(id: number, data: UpdateClientDto) {
     try {
-      return await this.prisma.clients.update({ where: { id }, data: data as any });
+      const { direccionPrincipal, ...clientData } = data;
+      return await this.prisma.$transaction(async (tx) => {
+        const currentClient = await tx.clients.findUnique({ where: { id }, select: { direccionId: true } as any }) as any;
+        if (direccionPrincipal) {
+          if (currentClient?.direccionId) {
+            await tx.direcciones.update({ where: { id: currentClient.direccionId }, data: direccionPrincipal });
+          } else {
+            const dir = await tx.direcciones.create({ data: { ...direccionPrincipal, tipo: 'PRINCIPAL' } });
+            (clientData as any).direccionId = dir.id;
+          }
+        }
+        await tx.clients.update({ where: { id }, data: clientData as any });
+        return tx.clients.findUnique({ where: { id }, include: clientInclude });
+      });
     } catch (error: any) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         throw new ClientAlreadyExistsException(data.email || 'email');

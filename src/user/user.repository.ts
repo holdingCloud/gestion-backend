@@ -167,7 +167,7 @@ export class UserRepository {
     try {
       return await this.prisma.users.findUnique({
         where: { email },
-        include: { rol: true },
+        include: { rol: { include: { modulos: true } } },
       });
     } catch (error) {
       this.logger.error(

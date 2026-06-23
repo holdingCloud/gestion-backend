@@ -32,22 +32,25 @@ export const CreateClientDocs = () =>
           summary: 'Cliente con todos los campos',
           value: {
             fullname: 'Pedro Rodríguez',
-            address: 'Av. Las Condes 4500',
-            n_depto_casa: 'Dpto 12',
-            referencia: 'Frente al mall',
             phone: '+56912345678',
+            phone2: '+56922345678',
             email: 'pedro.rodriguez@email.com',
-            communeId: 1,
             companyId: 1,
             frequency: 30,
             contactStatus: 'LLAMAR',
+            direccionPrincipal: {
+              calle: 'Av. Las Condes',
+              numero: '4500',
+              departamento: 'Dpto 12',
+              referencia: 'Frente al mall',
+              communeId: 1,
+            },
           },
         },
         minimo: {
-          summary: 'Cliente mínimo',
+          summary: 'Cliente mínimo (sin dirección)',
           value: {
             fullname: 'Ana Silva',
-            address: 'Calle Blanco 210',
             phone: '+56987654321',
             email: 'ana.silva@email.com',
           },
@@ -92,8 +95,17 @@ export const UpdateClientDocs = () =>
       type: UpdateClientDto,
       examples: {
         actualizar: {
-          summary: 'Actualizar dirección y teléfono',
-          value: { address: 'Av. Apoquindo 9000, Of. 5', phone: '+56911111222' },
+          summary: 'Actualizar dirección y teléfonos',
+          value: {
+            phone: '+56911111222',
+            phone2: '+56933111222',
+            direccionPrincipal: {
+              calle: 'Av. Apoquindo',
+              numero: '9000',
+              departamento: 'Of. 5',
+              communeId: 1,
+            },
+          },
         },
       },
     }),
