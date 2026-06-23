@@ -14,6 +14,11 @@ const clientInclude = {
   },
 } as any;
 
+const clientIncludeLight = {
+  company: { select: { id: true, name: true, description: true } },
+  direccion: { include: { commune: { select: { id: true, name: true, regionId: true } } } },
+} as any;
+
 @Injectable()
 export class ClientRepository {
   private readonly logger = new Logger(ClientRepository.name);
@@ -56,11 +61,13 @@ export class ClientRepository {
     search?: string,
     communeId?: number,
     regionId?: number,
+    companyId?: number,
   ) {
     try {
       const skip = (page - 1) * limit;
       const where: any = { available: true };
       if (contactStatus) where.contactStatus = contactStatus;
+      if (companyId) where.companyId = companyId;
       if (search) where.OR = [
         { fullname: { contains: search, mode: 'insensitive' } },
         { direccion: { calle: { contains: search, mode: 'insensitive' } } },
@@ -68,7 +75,7 @@ export class ClientRepository {
       if (communeId) where.direccion = { communeId };
       if (regionId) where.direccion = { commune: { regionId } };
       const [clients, total] = await Promise.all([
-        this.prisma.clients.findMany({ where, skip, take: limit, include: clientInclude }),
+        this.prisma.clients.findMany({ where, skip, take: limit, include: clientIncludeLight }),
         this.prisma.clients.count({ where }),
       ]);
       return { clients, total };
