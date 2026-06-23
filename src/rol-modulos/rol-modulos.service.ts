@@ -3,12 +3,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RolModulosRepository } from './rol-modulos.repository';
 import { AssignModulosDto } from './dto/assign-modulos.dto';
 import { Modulo } from '@prisma/client';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class RolModulosService {
   constructor(
     private readonly repo: RolModulosRepository,
     private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
   ) {}
 
   async getModulosByRol(rolId: number) {
@@ -20,17 +22,22 @@ export class RolModulosService {
   async setModulos(rolId: number, dto: AssignModulosDto) {
     await this.ensureRolExists(rolId);
     const records = await this.repo.setModulos(rolId, dto.modulos);
+    await this.redis.delByPattern('session:*');
     return records.map((r) => r.modulo);
   }
 
   async addModulo(rolId: number, modulo: Modulo) {
     await this.ensureRolExists(rolId);
-    return this.repo.addModulo(rolId, modulo);
+    const result = await this.repo.addModulo(rolId, modulo);
+    await this.redis.delByPattern('session:*');
+    return result;
   }
 
   async removeModulo(rolId: number, modulo: Modulo) {
     await this.ensureRolExists(rolId);
-    return this.repo.removeModulo(rolId, modulo);
+    const result = await this.repo.removeModulo(rolId, modulo);
+    await this.redis.delByPattern('session:*');
+    return result;
   }
 
   async getAllRolesWithModulos() {
