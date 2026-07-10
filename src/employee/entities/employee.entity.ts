@@ -1,4 +1,4 @@
-import { typePosition } from '@prisma/client';
+import { EstadoCivil, typePosition } from '@prisma/client';
 import { DireccionEntity } from 'src/direcciones/entities/direccion.entity';
 
 export class EmployeeEntity {
@@ -7,9 +7,17 @@ export class EmployeeEntity {
 	fullname: string;
 	email: string;
 	salary: number;
-	hireDate: string;
+	hireDate: Date;
 	available: boolean;
 	type: typePosition;
+	fechaNacimiento?: Date | null;
+	estadoCivil?: EstadoCivil | null;
+	cargoId?: number | null;
+	departamentoId?: number | null;
+	afpId?: number | null;
+	sistemasSaludId?: number | null;
+	mutualId?: number | null;
+	jefeId?: number | null;
 	direccionId?: number | null;
 	direccion?: DireccionEntity | null;
 	createdAt: Date;

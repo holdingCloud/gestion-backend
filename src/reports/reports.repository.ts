@@ -78,6 +78,7 @@ export class ReportsRepository {
     clientId?: number,
     orderBy: ClientReportOrderBy = ClientReportOrderBy.FREQUENCY,
     companyId?: number,
+    limit: number = 200,
   ) {
     const { start, end } = this.buildDateRange(startDate, endDate);
     const communeFilter = communeId ? Prisma.sql`AND d."communeId" = ${communeId}` : Prisma.empty;
@@ -120,6 +121,7 @@ export class ReportsRepository {
       ${companyFilter}
       GROUP BY c.id, c.fullname, co.name, comp.name, cpf."avgDaysBetweenPurchases"
       ORDER BY ${orderClause}
+      LIMIT ${limit}
     `;
   }
 

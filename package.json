@@ -23,6 +23,7 @@
     "seed:companies": "ts-node -r tsconfig-paths/register prisma/seed-companies.ts"
   },
   "dependencies": {
+    "@axiomhq/winston": "^1.7.0",
     "@nestjs/common": "^11.0.1",
     "@nestjs/config": "^4.0.2",
     "@nestjs/core": "^11.0.1",
@@ -41,13 +42,15 @@
     "dotenv": "^17.2.3",
     "ioredis": "^5.11.1",
     "joi": "^18.0.1",
+    "nest-winston": "^1.10.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
     "prisma": "^5.11.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
     "socket.io": "^4.8.3",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

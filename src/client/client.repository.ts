@@ -11,6 +11,7 @@ const clientInclude = {
   clientProductFrequencies: {
     include: { product: { select: { id: true, name: true, code: true } } },
     orderBy: { actualPurchaseDate: 'desc' as const },
+    take: 20,
   },
 } as any;
 
@@ -238,6 +239,7 @@ export class ClientRepository {
         where: { clientsId },
         include: { product: { select: { id: true, name: true, code: true } } },
         orderBy: { actualPurchaseDate: 'desc' },
+        take: 50,
       });
     } catch (error: any) {
       this.logger.error(`Error fetching frequency for client ${clientsId}: ${error.message}`, error.stack);

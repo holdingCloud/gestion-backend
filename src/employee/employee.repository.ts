@@ -7,6 +7,11 @@ import { EmployeeAlreadyExistsException } from './exceptions';
 
 const employeeInclude = {
   direccion: { include: { commune: { select: { id: true, name: true, regionId: true } } } },
+  cargo: true,
+  departamento: true,
+  afp: true,
+  sistemasSalud: true,
+  mutual: true,
 } as any;
 
 @Injectable()

@@ -166,7 +166,10 @@ export class ClientService {
 
       if (dto.purchaseStatus === PurchaseStatus.FINALIZADO) {
         await this.applyFinalizePurchase(clientId, purchase);
-        await this.invalidateClientCache(clientId);
+        await Promise.all([
+          this.invalidateClientCache(clientId),
+          this.redis.delByPattern('report:*'),
+        ]);
       }
 
       this.logger.log(`Purchase ${purchaseId} → ${dto.purchaseStatus} for client ${clientId}`);

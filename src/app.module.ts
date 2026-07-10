@@ -20,6 +20,15 @@ import { ReportsModule } from './reports/reports.module';
 import { CompanyModule } from './company/company.module';
 import { RoleModule } from './role/role.module';
 import { RolModulosModule } from './rol-modulos/rol-modulos.module';
+// RRHH
+import { DepartamentosModule } from './departamentos/departamentos.module';
+import { PrevisionModule } from './prevision/prevision.module';
+import { ContratosModule } from './contratos/contratos.module';
+import { LiquidacionesModule } from './liquidaciones/liquidaciones.module';
+import { AusenciasModule } from './ausencias/ausencias.module';
+import { AnticiposModule } from './anticipos/anticipos.module';
+import { FiniquitosModule } from './finiquitos/finiquitos.module';
+import { DocumentosEmpleadoModule } from './documentos-empleado/documentos-empleado.module';
 
 @Module({
   imports: [
@@ -46,6 +55,15 @@ import { RolModulosModule } from './rol-modulos/rol-modulos.module';
     CompanyModule,
     RoleModule,
     RolModulosModule,
+    // RRHH
+    DepartamentosModule,
+    PrevisionModule,
+    ContratosModule,
+    LiquidacionesModule,
+    AusenciasModule,
+    AnticiposModule,
+    FiniquitosModule,
+    DocumentosEmpleadoModule,
   ],
   controllers: [],
   providers: [],
