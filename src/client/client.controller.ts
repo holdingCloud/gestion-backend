@@ -62,6 +62,7 @@ export class ClientController {
     @Query('search') search?: string,
     @Query('communeId') communeId?: string,
     @Query('regionId') regionId?: string,
+    @Query('companyId') companyId?: string,
   ) {
     return this.clientService.findAll(
       pagination.page,
@@ -70,6 +71,7 @@ export class ClientController {
       search,
       communeId ? parseInt(communeId, 10) : undefined,
       regionId ? parseInt(regionId, 10) : undefined,
+      companyId ? parseInt(companyId, 10) : undefined,
     );
   }
 

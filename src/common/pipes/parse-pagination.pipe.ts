@@ -1,5 +1,7 @@
 import { PipeTransform, Injectable, BadRequestException } from '@nestjs/common';
 
+const MAX_LIMIT = 100;
+
 @Injectable()
 export class ParsePaginationPipe implements PipeTransform {
   transform(value: any) {
@@ -10,17 +12,14 @@ export class ParsePaginationPipe implements PipeTransform {
     const page = value.page ? parseInt(value.page, 10) : 1;
     const limit = value.limit ? parseInt(value.limit, 10) : 10;
 
-    // Validar que sean números válidos y positivos
     if (isNaN(page) || isNaN(limit) || page < 1 || limit < 1) {
-      throw new BadRequestException(
-        'page and limit must be positive integers',
-      );
+      throw new BadRequestException('page and limit must be positive integers');
     }
 
-    return { 
-      ...value,
-      page, 
-      limit 
-    };
+    if (limit > MAX_LIMIT) {
+      throw new BadRequestException(`limit cannot exceed ${MAX_LIMIT}`);
+    }
+
+    return { ...value, page, limit };
   }
 }

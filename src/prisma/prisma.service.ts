@@ -12,8 +12,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       log: [],
       datasources: {
         db: {
-          // Limita el pool a 2 conexiones para no saturar el pooler de Supabase (límite: 15)
-          url: `${baseUrl}${separator}connection_limit=2&pool_timeout=10`,
+          url: `${baseUrl}${separator}connection_limit=5&pool_timeout=20`,
         },
       },
     });
