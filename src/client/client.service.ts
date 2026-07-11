@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Cron, CronExpression } from '@nestjs/schedule';
 import { ClientRepository } from './client.repository';
 import { CreateClientDto } from './dto/create-client.dto';
 import { UpdateClientDto } from './dto/update-client.dto';
@@ -12,7 +13,19 @@ import { ClientNotFoundException } from './exceptions';
 import { PaginatedResponse } from 'src/common/responses/paginated.response';
 import { ContactStatus, PurchaseStatus } from '@prisma/client';
 import { FrequencyStatus } from './enums/frequency-status.enum';
+import { envs } from 'src/config/envs';
 import { RedisService } from 'src/redis/redis.service';
+
+// Días que se respeta un estado seteado manualmente antes de que el recálculo automático retome el control.
+const MANUAL_LOCK_DAYS = 7;
+
+// Urgencia relativa: el recálculo automático solo puede escalar, nunca retroceder.
+const STATUS_RANK: Record<ContactStatus, number> = {
+  [ContactStatus.NUEVO]: 0,
+  [ContactStatus.CONTACTADO]: 1,
+  [ContactStatus.LLAMAR]: 2,
+  [ContactStatus.VENCIDO]: 3,
+};
 
 const CLIENT_ONE_TTL = 120;
 const CLIENT_STATUS_REFRESH_TTL = 3600;
@@ -100,7 +113,7 @@ export class ClientService {
     try {
       const existing = await this.repo.findOne(id);
       if (!existing) throw new ClientNotFoundException(id);
-      const client = await this.repo.updateContactStatus(id, dto.contactStatus);
+      const client = await this.repo.updateContactStatus(id, dto.contactStatus, MANUAL_LOCK_DAYS);
       await this.invalidateClientCache(id);
       return new ClientEntity({ ...client });
     } catch (error: any) {
@@ -258,9 +271,26 @@ export class ClientService {
     await this.repo.updateContactStatus(clientId, ContactStatus.CONTACTADO);
   }
 
+  @Cron(CronExpression.EVERY_DAY_AT_6AM)
+  async recalculateAllStatuses(): Promise<void> {
+    try {
+      const clients = await this.repo.findAllForStatusRefresh();
+      let changed = 0;
+      for (const client of clients) {
+        const updated = await this.refreshClientStatus(client);
+        if (updated.contactStatus !== client.contactStatus) changed++;
+      }
+      this.logger.log(`Recálculo de estados: ${changed}/${clients.length} clientes actualizados`);
+    } catch (error: any) {
+      this.logger.error(`Failed to recalculate client statuses: ${error.message}`, error.stack);
+    }
+  }
+
   private async refreshClientStatus(client: any): Promise<any> {
-    const avg: number | null = client.frequency ?? null;
-    if (!avg) return client;
+    // Respeta un estado seteado a mano mientras el lock siga vigente.
+    if (client.contactStatusLockedUntil && new Date(client.contactStatusLockedUntil) > new Date()) {
+      return client;
+    }
 
     const frequencies: any[] = client.clientProductFrequencies ?? [];
     if (!frequencies.length) return client;
@@ -273,28 +303,28 @@ export class ClientService {
       .filter((f) => f.actualPurchaseDate)
       .sort((a, b) => new Date(b.actualPurchaseDate).getTime() - new Date(a.actualPurchaseDate).getTime())[0];
 
-    if (!latest) return client;
+    if (!latest) return client; // sin compras finalizadas → sigue NUEVO
 
+    const cycle = client.frequency && client.frequency > 0 ? client.frequency : envs.DEFAULT_CYCLE_DAYS;
     const daysSince = Math.floor(
       (Date.now() - new Date(latest.actualPurchaseDate).getTime()) / (1000 * 60 * 60 * 24),
     );
 
-    let newStatus: ContactStatus = client.contactStatus;
-
-    if (daysSince > avg) {
-      newStatus = ContactStatus.VENCIDO;
-    } else if (avg - daysSince <= 3 && client.contactStatus === ContactStatus.CONTACTADO) {
-      newStatus = ContactStatus.LLAMAR;
+    let derived: ContactStatus = ContactStatus.CONTACTADO;
+    if (daysSince > cycle) {
+      derived = ContactStatus.VENCIDO;
+    } else if (cycle - daysSince <= 3) {
+      derived = ContactStatus.LLAMAR;
     }
 
+    // Solo escalar urgencia, nunca retroceder.
+    if (STATUS_RANK[derived] <= STATUS_RANK[client.contactStatus as ContactStatus]) return client;
+
+    // Evita recalcular el mismo cliente hasta que expire el TTL.
     await this.redis.set(throttleKey, '1', CLIENT_STATUS_REFRESH_TTL);
 
-    if (newStatus !== client.contactStatus) {
-      await this.repo.updateContactStatus(client.id, newStatus);
-      return { ...client, contactStatus: newStatus };
-    }
-
-    return client;
+    await this.repo.updateContactStatus(client.id, derived);
+    return { ...client, contactStatus: derived };
   }
 
   private async invalidateClientCache(id: number): Promise<void> {

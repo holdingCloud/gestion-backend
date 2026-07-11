@@ -1,5 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString, IsOptional, IsEnum, IsInt, Min, IsNumber, Max, MaxLength, ValidateNested } from 'class-validator';
-import { ContactStatus } from '@prisma/client';
+import { IsEmail, IsNotEmpty, IsString, IsOptional, IsInt, Min, IsNumber, Max, MaxLength, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class DireccionPrincipalDto {
@@ -67,10 +66,6 @@ export class CreateClientDto {
   @IsInt()
   @Min(1)
   frequency?: number;
-
-  @IsOptional()
-  @IsEnum(ContactStatus)
-  contactStatus?: ContactStatus;
 
   @IsOptional()
   @ValidateNested()

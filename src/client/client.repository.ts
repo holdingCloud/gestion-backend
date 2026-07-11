@@ -75,7 +75,7 @@ export class ClientRepository {
       if (communeId) where.direccion = { communeId };
       if (regionId) where.direccion = { commune: { regionId } };
       const [clients, total] = await Promise.all([
-        this.prisma.clients.findMany({ where, skip, take: limit, include: clientIncludeLight }),
+        this.prisma.clients.findMany({ where, skip, take: limit, include: clientIncludeLight, orderBy: { id: 'desc' } }),
         this.prisma.clients.count({ where }),
       ]);
       return { clients, total };
@@ -119,11 +119,21 @@ export class ClientRepository {
     }
   }
 
-  async updateContactStatus(id: number, contactStatus: ContactStatus) {
+  async updateContactStatus(id: number, contactStatus: ContactStatus, lockDays?: number) {
     try {
-      return await this.prisma.clients.update({ where: { id }, data: { contactStatus } });
+      const contactStatusLockedUntil = lockDays ? new Date(Date.now() + lockDays * 86400000) : null;
+      return await this.prisma.clients.update({ where: { id }, data: { contactStatus, contactStatusLockedUntil } });
     } catch (error: any) {
       this.logger.error(`Error updating contact status for client ${id}: ${error.message}`, error.stack);
+      throw error;
+    }
+  }
+
+  async findAllForStatusRefresh() {
+    try {
+      return await this.prisma.clients.findMany({ where: { available: true }, include: clientInclude });
+    } catch (error: any) {
+      this.logger.error(`Error fetching clients for status refresh: ${error.message}`, error.stack);
       throw error;
     }
   }

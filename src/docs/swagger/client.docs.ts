@@ -37,7 +37,6 @@ export const CreateClientDocs = () =>
             email: 'pedro.rodriguez@email.com',
             companyId: 1,
             frequency: 30,
-            contactStatus: 'LLAMAR',
             direccionPrincipal: {
               calle: 'Av. Las Condes',
               numero: '4500',
@@ -66,7 +65,7 @@ export const FindAllClientsDocs = () =>
   applyDecorators(
     ApiOperation({
       summary: 'Listar clientes',
-      description: 'Retorna lista paginada con frecuencias incluidas. Recalcula y persiste el contactStatus según frecuencia de compra en cada consulta.',
+      description: 'Retorna lista paginada con frecuencias incluidas. Recalcula el contactStatus según la frecuencia de compra en cada consulta (solo escala urgencia, nunca retrocede). El filtro contactStatus se aplica sobre el valor persistido.',
     }),
     ApiQuery({ name: 'page', required: false, type: Number }),
     ApiQuery({ name: 'limit', required: false, type: Number }),
@@ -80,7 +79,7 @@ export const FindAllClientsDocs = () =>
 
 export const FindOneClientDocs = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Obtener cliente por ID', description: 'Incluye frecuencias y recalcula contactStatus' }),
+    ApiOperation({ summary: 'Obtener cliente por ID', description: 'Incluye frecuencias y recalcula contactStatus (solo escala urgencia)' }),
     ApiParam({ name: 'id', type: Number }),
     ApiOkResponse({ description: 'Cliente encontrado' }),
     ApiNotFoundResponse({ description: 'Cliente no encontrado' }),
@@ -117,16 +116,21 @@ export const UpdateClientDocs = () =>
 
 export const UpdateContactStatusDocs = () =>
   applyDecorators(
-    ApiOperation({ summary: 'Actualizar estado de contacto manualmente' }),
+    ApiOperation({
+      summary: 'Actualizar estado de contacto manualmente',
+      description: 'Valores permitidos: LLAMAR, CONTACTADO, VENCIDO. NUEVO es un estado derivado y se rechaza con 400. El estado manual se respeta durante 7 días (lock) antes de que el recálculo automático retome el control; finalizar una compra reinicia el ciclo.',
+    }),
     ApiParam({ name: 'id', type: Number }),
     ApiBody({
       type: UpdateContactStatusDto,
       examples: {
         llamar: { summary: 'Marcar para llamar', value: { contactStatus: 'LLAMAR' } },
         contactado: { summary: 'Marcar como contactado', value: { contactStatus: 'CONTACTADO' } },
+        vencido: { summary: 'Marcar como vencido', value: { contactStatus: 'VENCIDO' } },
       },
     }),
     ApiOkResponse({ description: 'Estado actualizado' }),
+    ApiBadRequestResponse({ description: 'Estado inválido (p. ej. NUEVO, que no puede asignarse manualmente)' }),
     ApiNotFoundResponse({ description: 'Cliente no encontrado' }),
     ApiUnauthorizedResponse({ description: 'No autorizado' }),
   );
@@ -166,7 +170,7 @@ export const UpdatePurchaseStatusDocs = () =>
     ApiOperation({
       summary: 'Finalizar o anular compra',
       description: `
-**FINALIZADO**: actualiza frecuencia del cliente (actualPurchaseDate, avgDaysBetweenPurchases, nextEstimatedDate) y cambia contactStatus → CONTACTADO.
+**FINALIZADO**: actualiza frecuencia del cliente (actualPurchaseDate, avgDaysBetweenPurchases, nextEstimatedDate) y cambia contactStatus → CONTACTADO (sacándolo de NUEVO en su primera compra y reiniciando el ciclo/lock).
 
 **ANULADO**: solo marca la compra como anulada, no realiza ninguna otra acción.
 

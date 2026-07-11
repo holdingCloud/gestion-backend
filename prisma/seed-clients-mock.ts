@@ -138,7 +138,7 @@ async function applyFinalizePurchase(
   return avgDaysBetweenPurchases;
 }
 
-async function seedClientsMock() {
+export async function seedClientsMock() {
   const START = new Date('2026-01-01T00:00:00.000Z');
   const END   = new Date('2026-06-13T23:59:59.000Z');
 
@@ -159,20 +159,19 @@ async function seedClientsMock() {
     const communeId = communeIds.length > 0 ? pick(communeIds) : undefined;
     const { address, n_depto_casa, referencia, ...clientFields } = clientData;
     const client = await prisma.clients.create({
-      data: { ...clientFields, available: true, contactStatus: ContactStatus.LLAMAR },
+      data: { ...clientFields, available: true, contactStatus: ContactStatus.NUEVO },
     });
-    // Crear dirección principal en Direcciones
-    await (prisma as any).direcciones.create({
+    // Crear dirección principal y enlazarla vía la FK invertida (Clients.direccionId)
+    const direccion = await (prisma as any).direcciones.create({
       data: {
         tipo: 'PRINCIPAL',
         calle: address,
         departamento: n_depto_casa ?? null,
         referencia: referencia ?? null,
         communeId: communeId ?? null,
-        principal: true,
-        clientId: client.id,
       },
     });
+    await prisma.clients.update({ where: { id: client.id }, data: { direccionId: direccion.id } });
     createdClients++;
 
     // Seleccionar 1-3 productos que comprará este cliente
@@ -232,10 +231,12 @@ async function seedClientsMock() {
   console.log(`\n✨ Seed completado: ${createdClients} clientes, ${createdPurchases} compras.`);
 }
 
-seedClientsMock()
-  .then(async () => await prisma.$disconnect())
-  .catch(async (error) => {
-    console.error('❌ Error:', error);
-    await prisma.$disconnect();
-    process.exit(1);
-  });
+if (require.main === module) {
+  seedClientsMock()
+    .then(async () => await prisma.$disconnect())
+    .catch(async (error) => {
+      console.error('❌ Error:', error);
+      await prisma.$disconnect();
+      process.exit(1);
+    });
+}
