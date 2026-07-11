@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
 import { RedisModule } from './redis/redis.module';
 import { DireccionesModule } from './direcciones/direcciones.module';
@@ -26,6 +27,7 @@ import { RolModulosModule } from './rol-modulos/rol-modulos.module';
     ConfigModule.forRoot({
     isGlobal: true,
     }),
+    ScheduleModule.forRoot(),
     RedisModule,
     PrismaModule,
     AuthModule,

@@ -136,25 +136,28 @@ async function main() {
     console.log(`✅ Cliente 5 (Pedro): avg 35d, última hace 10d → faltan 25d → EN_PLAZO | CONTACTADO`);
   }
 
-  // ─── Escenario 4: Cliente 6 (Ana) → NUEVO ───────────────────────────────────
-  // 1 sola compra, compra pendiente también
+  // ─── Escenario 4: Cliente 6 (Ana) → LLAMAR (fix del congelamiento) ──────────
+  // 1 sola compra finalizada hace 28 días. Sin frequency (avg null) → se mide contra
+  // DEFAULT_CYCLE_DAYS (30). 30 - 28 = 2 ≤ 3 → refreshClientStatus lo escala a LLAMAR.
+  // Antes del fix este cliente quedaba congelado en CONTACTADO. Se deja en CONTACTADO
+  // para evidenciar que el recálculo lo lleva a LLAMAR en la primera consulta.
   {
     const clientId = 6;
     const productId = 3;
 
-    // Compra FINALIZADA
+    // Compra FINALIZADA — hace 28 días
     await prisma.buyByClient.create({
       data: {
         clientsId: clientId, productsId: productId, quantity: 1, unitPrice: 8900,
-        purchaseDate: daysAgo(8), purchaseStatus: PurchaseStatus.FINALIZADO,
-        createdAt: daysAgo(8), updatedAt: daysAgo(8),
+        purchaseDate: daysAgo(28), purchaseStatus: PurchaseStatus.FINALIZADO,
+        createdAt: daysAgo(28), updatedAt: daysAgo(28),
       },
     });
 
     await (prisma as any).clientProductFrequency.upsert({
       where: { clientsId_productsId: { clientsId: clientId, productsId: productId } },
-      create: { clientsId: clientId, productsId: productId, purchaseCount: 1, avgDaysBetweenPurchases: null, lastPurchaseDate: null, actualPurchaseDate: daysAgo(8), nextEstimatedDate: null, status: FrequencyStatus.NUEVO },
-      update: { purchaseCount: 1, avgDaysBetweenPurchases: null, lastPurchaseDate: null, actualPurchaseDate: daysAgo(8), nextEstimatedDate: null, status: FrequencyStatus.NUEVO },
+      create: { clientsId: clientId, productsId: productId, purchaseCount: 1, avgDaysBetweenPurchases: null, lastPurchaseDate: null, actualPurchaseDate: daysAgo(28), nextEstimatedDate: null, status: FrequencyStatus.NUEVO },
+      update: { purchaseCount: 1, avgDaysBetweenPurchases: null, lastPurchaseDate: null, actualPurchaseDate: daysAgo(28), nextEstimatedDate: null, status: FrequencyStatus.NUEVO },
     });
 
     // Compra PENDIENTE (para probar el flujo de finalización)
@@ -165,8 +168,8 @@ async function main() {
       },
     });
 
-    await prisma.clients.update({ where: { id: clientId }, data: { contactStatus: ContactStatus.LLAMAR } });
-    console.log(`✅ Cliente 6 (Ana): 1 compra finalizada prod.3 → NUEVO | 1 compra PENDIENTE | LLAMAR`);
+    await prisma.clients.update({ where: { id: clientId }, data: { contactStatus: ContactStatus.CONTACTADO } });
+    console.log(`✅ Cliente 6 (Ana): 1 compra finalizada prod.3 hace 28d → refresh lo escala a LLAMAR (fix congelamiento) | 1 compra PENDIENTE`);
   }
 
   console.log('\n📊 Resumen de escenarios mock:');
@@ -174,7 +177,7 @@ async function main() {
   console.log('Cliente 1 (Pochilda) → VENCIDO     (avg 30d, última hace 45d)');
   console.log('Cliente 3 (Carlos)   → CONTACTADO  (avg 32d, faltan 4d → irá a LLAMAR pronto)');
   console.log('Cliente 5 (Pedro)    → CONTACTADO  (avg 35d, faltan 25d → EN_PLAZO)');
-  console.log('Cliente 6 (Ana)      → LLAMAR      (sin frecuencia, compra PENDIENTE)');
+  console.log('Cliente 6 (Ana)      → LLAMAR      (1 sola compra hace 28d, sin avg → ciclo 30 → escala; fix congelamiento)');
   console.log('─────────────────────────────────────────────────────────────────────');
   console.log('✨ Seed mock completado!\n');
 }
