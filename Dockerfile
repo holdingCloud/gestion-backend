@@ -36,4 +36,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
   CMD node -e "require('http').get('http://localhost:3000/api/healthcheck', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('error', () => process.exit(1))"
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/prisma/seed.js && node dist/src/main.js"]
+# El seed NO se ejecuta en el arranque: en prod solo aplicamos migraciones y levantamos la app.
+# El seed base (roles, usuarios, regiones/comunas) se corre manualmente UNA vez al provisionar
+# el entorno:  node dist/prisma/seed.js  (con NODE_ENV=production omite los datos mock).
+CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]

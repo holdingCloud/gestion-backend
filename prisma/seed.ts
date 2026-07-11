@@ -305,9 +305,17 @@ async function main() {
   console.log(`✨ Seed base completado! ${totalRegions} regiones, ${totalCommunes} comunas.`);
 
   // ─── Seeds de datos mock (orden por dependencias) ───────────────────────────
+  // Solo en entornos NO productivos: insertan clientes/empresas/reportes ficticios.
+  // En producción se omiten para no mezclar data falsa con la real (y evita el
+  // P2002 de Direcciones por la secuencia al recrear direcciones mock).
   // clients  → crea clientes, productos y compras (necesita regiones/comunas)
   // companies → crea empresas y asigna los clientes existentes
   // reports  → genera compras/frecuencias mock (necesita clientes y productos)
+  if (process.env.NODE_ENV === 'production') {
+    console.log('\n⏭️  NODE_ENV=production → se omiten los seeds de datos mock.');
+    return;
+  }
+
   console.log('\n🌱 Iniciando seeds de datos mock (clientes, empresas, reportes)...');
   await seedClientsMock();
   await seedCompanies();
