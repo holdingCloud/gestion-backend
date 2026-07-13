@@ -19,7 +19,7 @@ function weightedStatus(): PurchaseStatus {
 
 const UNIT_PRICES = [2500, 3000, 3500, 4000, 4500, 5000, 6000, 7500, 9000, 10000, 12000, 15000];
 
-async function main() {
+export async function seedReportsMock() {
   console.log('Iniciando seed de datos mock para reportes...');
 
   const [clients, products] = await Promise.all([
@@ -163,6 +163,8 @@ async function main() {
   console.log('Seed completado exitosamente.');
 }
 
-main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  seedReportsMock()
+    .catch((e) => { console.error(e); process.exit(1); })
+    .finally(() => prisma.$disconnect());
+}

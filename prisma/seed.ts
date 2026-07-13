@@ -1,5 +1,8 @@
 import { PrismaClient, Modulo } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
+import { seedClientsMock } from './seed-clients-mock';
+import { seedCompanies } from './seed-companies';
+import { seedReportsMock } from './seed-reports-mock';
 
 const prisma = new PrismaClient();
 
@@ -299,7 +302,25 @@ async function main() {
 
   const totalRegions = await prisma.region.count();
   const totalCommunes = await prisma.commune.count();
-  console.log(`✨ Seed completado! ${totalRegions} regiones, ${totalCommunes} comunas.`);
+  console.log(`✨ Seed base completado! ${totalRegions} regiones, ${totalCommunes} comunas.`);
+
+  // ─── Seeds de datos mock (orden por dependencias) ───────────────────────────
+  // Solo en entornos NO productivos: insertan clientes/empresas/reportes ficticios.
+  // En producción se omiten para no mezclar data falsa con la real (y evita el
+  // P2002 de Direcciones por la secuencia al recrear direcciones mock).
+  // clients  → crea clientes, productos y compras (necesita regiones/comunas)
+  // companies → crea empresas y asigna los clientes existentes
+  // reports  → genera compras/frecuencias mock (necesita clientes y productos)
+  if (process.env.NODE_ENV === 'production') {
+    console.log('\n⏭️  NODE_ENV=production → se omiten los seeds de datos mock.');
+    return;
+  }
+
+  console.log('\n🌱 Iniciando seeds de datos mock (clientes, empresas, reportes)...');
+  await seedClientsMock();
+  await seedCompanies();
+  await seedReportsMock();
+  console.log('✨ Seeds de datos mock completados!');
 }
 
 main()

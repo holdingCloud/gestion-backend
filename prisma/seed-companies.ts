@@ -17,7 +17,7 @@ const COMPANIES = [
   },
 ];
 
-async function main() {
+export async function seedCompanies() {
   console.log('Iniciando seed de empresas...');
 
   // Crear empresas que no existan aún (match por nombre)
@@ -68,6 +68,8 @@ async function main() {
   console.log(`\nAsignación completada: ${clients.length} clientes actualizados.`);
 }
 
-main()
-  .catch((e) => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+if (require.main === module) {
+  seedCompanies()
+    .catch((e) => { console.error(e); process.exit(1); })
+    .finally(() => prisma.$disconnect());
+}

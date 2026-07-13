@@ -33,6 +33,7 @@ enum ContactStatus {
   LLAMAR
   CONTACTADO
   VENCIDO
+  NUEVO
 }
 
 enum PurchaseStatus {
@@ -285,7 +286,8 @@ model Clients {
   buysByClient             buyByClient[]
   clientProductFrequencies ClientProductFrequency[]
   available                Boolean                  @default(true)
-  contactStatus            ContactStatus            @default(LLAMAR)
+  contactStatus            ContactStatus            @default(NUEVO)
+  contactStatusLockedUntil DateTime?
   frequency                Int?
   createdAt                DateTime                 @default(now())
   updatedAt                DateTime                 @updatedAt
