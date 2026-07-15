@@ -1,10 +1,13 @@
-import { typePosition } from '@prisma/client';
+import { EstadoCivil, typePosition } from '@prisma/client';
 import {
+	IsDateString,
 	IsEmail,
 	IsEnum,
+	IsInt,
 	IsNotEmpty,
 	IsNumber,
 	IsOptional,
+	IsPositive,
 	IsString,
 	Min,
 	ValidateNested,
@@ -29,13 +32,51 @@ export class CreateEmployeeDto {
 	@Min(0)
 	salary: number;
 
-	@IsString()
+	@IsDateString()
 	@IsNotEmpty()
 	hireDate: string;
 
 	@IsOptional()
 	@IsEnum(typePosition)
 	type?: typePosition;
+
+	@IsOptional()
+	@IsDateString()
+	fechaNacimiento?: string;
+
+	@IsOptional()
+	@IsEnum(EstadoCivil)
+	estadoCivil?: EstadoCivil;
+
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	cargoId?: number;
+
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	departamentoId?: number;
+
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	afpId?: number;
+
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	sistemasSaludId?: number;
+
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	mutualId?: number;
+
+	@IsOptional()
+	@IsInt()
+	@IsPositive()
+	jefeId?: number;
 
 	@IsOptional()
 	@ValidateNested()

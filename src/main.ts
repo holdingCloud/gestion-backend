@@ -3,10 +3,13 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { setupSwagger } from './docs/swagger.setup';
+import { createWinstonLogger } from './logger/winston.config';
 
 async function bootstrap() {
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: createWinstonLogger(),
+  });
 
   app.setGlobalPrefix('api/');
   app.enableCors({

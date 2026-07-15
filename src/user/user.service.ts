@@ -7,12 +7,26 @@ import { UserNotFoundException } from './exceptions';
 import * as bcrypt from 'bcrypt';
 import { PaginatedResponse } from 'src/common/responses/paginated.response';
 import { PaginationDto } from './dto/pagination.dto';
+import { RedisService } from 'src/redis/redis.service';
 
 @Injectable()
 export class UserService {
   private readonly logger = new Logger(UserService.name);
 
-  constructor(private repo: UserRepository) {}
+  constructor(
+    private repo: UserRepository,
+    private redisService: RedisService,
+  ) {}
+
+  /**
+   * Estado de sesión en tiempo real. La verdad de "está conectado ahora"
+   * es la existencia de la key `session:${userId}` en Redis (la crea el
+   * login con TTL y la borra el logout / expira sola). Deriva de ahí en
+   * lugar del campo `isLoged` de la BD, que puede quedar desfasado.
+   */
+  private async isUserLoged(id: number): Promise<boolean> {
+    return (await this.redisService.get(`session:${id}`)) !== null;
+  }
 
   async create(dto: CreateUserDto): Promise<UserEntity> {
     try {
@@ -26,7 +40,7 @@ export class UserService {
         ...users,
         rol: typeof users.rol === 'object' ? users.rol.type.toString() : users.rol,
         isActive: users.isActive ?? undefined,
-        isLoged: users.isLoged ?? undefined,
+        isLoged: await this.isUserLoged(users.id),
       });
     } catch (error: any) {
      if (error instanceof Error) {
@@ -40,14 +54,15 @@ export class UserService {
     const { page = 1, limit = 10, fullName, email } = pagination;
     try {
       const { users, total } = await this.repo.findAll({ page, limit, fullName, email });
-      const mappedUsers = users.map(
-        ({password, ...u}) =>
+      const mappedUsers = await Promise.all(
+        users.map(async ({ password, ...u }) =>
           new UserEntity({
             ...u,
             rol: typeof u.rol === 'object' ? u.rol.type.toString() : u.rol,
             isActive: u.isActive ?? undefined,
-            isLoged: u.isLoged ?? undefined,
+            isLoged: await this.isUserLoged(u.id),
           }),
+        ),
       );
       return new PaginatedResponse(mappedUsers, total, page, limit);
     } catch (error: any) {
@@ -71,7 +86,7 @@ export class UserService {
         ...user,
         rol: typeof user.rol === 'object' ? user.rol.type.toString() : user.rol,
         isActive: user.isActive ?? undefined,
-        isLoged: user.isLoged ?? undefined,
+        isLoged: await this.isUserLoged(user.id),
       });
     } catch (error: any) {
       if (error instanceof UserNotFoundException) {
@@ -102,7 +117,7 @@ export class UserService {
         ...user,
         rol: typeof user.rol === 'object' ? user.rol.type.toString() : user.rol,
         isActive: user.isActive ?? undefined,
-        isLoged: user.isLoged ?? undefined,
+        isLoged: await this.isUserLoged(user.id),
       });
     } catch (error: any) {
       if (error instanceof UserNotFoundException) {
@@ -130,7 +145,7 @@ export class UserService {
         ...user,
         rol: typeof user.rol === 'object' ? user.rol.type.toString() : user.rol,
         isActive: user.isActive ?? undefined,
-        isLoged: user.isLoged ?? undefined,
+        isLoged: await this.isUserLoged(user.id),
       });
     } catch (error: any) {
       if (error instanceof UserNotFoundException) {
@@ -159,7 +174,7 @@ export class UserService {
         modulos,
         rol: typeof user.rol === 'object' ? user.rol.type.toString() : user.rol,
         isActive: user.isActive ?? undefined,
-        isLoged: user.isLoged ?? undefined,
+        isLoged: await this.isUserLoged(user.id),
       });
     } catch (error: any) {
       if (error instanceof UserNotFoundException) {
