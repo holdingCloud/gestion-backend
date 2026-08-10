@@ -13,7 +13,7 @@ export class ClientEntity {
   fullname!: string;
   phone!: string;
   phone2!: string | null;
-  email!: string;
+  email!: string | null;
   companyId!: number | null;
   company?: CompanyRef | null;
   direccionId?: number | null;

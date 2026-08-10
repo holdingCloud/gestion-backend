@@ -1,5 +1,5 @@
 import { IsEmail, IsNotEmpty, IsString, IsOptional, IsInt, Min, IsNumber, Max, MaxLength, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
+import { Type, Transform } from 'class-transformer';
 
 export class DireccionPrincipalDto {
   @IsString()
@@ -53,9 +53,10 @@ export class CreateClientDto {
   @IsString()
   phone2?: string;
 
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? null : value))
   @IsEmail()
-  @IsNotEmpty()
-  email!: string;
+  email?: string | null;
 
   @IsOptional()
   @IsInt()

@@ -48,7 +48,7 @@ export class ClientRepository {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
         const target = (error.meta?.target as string[])?.join(', ') ?? 'campo desconocido';
         this.logger.error(`P2002 unique constraint violated on: ${target}`);
-        throw new ClientAlreadyExistsException(data.email);
+        throw new ClientAlreadyExistsException(data.email ?? 'email');
       }
       this.logger.error(`Error creating client: ${error.message}`, error.stack);
       throw error;
@@ -113,7 +113,7 @@ export class ClientRepository {
       });
     } catch (error: any) {
       if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
-        throw new ClientAlreadyExistsException(data.email || 'email');
+        throw new ClientAlreadyExistsException(data.email ?? 'email');
       }
       this.logger.error(`Error updating client with id ${id}: ${error.message}`, error.stack);
       throw error;
