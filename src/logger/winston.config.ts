@@ -14,8 +14,11 @@ export function createWinstonLogger() {
     }),
   ];
 
+  // 'info' en producción (no 'warn'): con 'warn' se descartan los mensajes de arranque
+  // de Nest y los accesos HTTP del LoggingInterceptor, dejando el contenedor sin ningún
+  // log útil para diagnosticar un despliegue.
   return WinstonModule.createLogger({
-    level: isProduction ? 'warn' : 'debug',
+    level: isProduction ? 'info' : 'debug',
     transports,
   });
 }

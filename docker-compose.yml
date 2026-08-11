@@ -8,6 +8,8 @@ services:
     environment:
       PORT: 3000
       DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
+      # En local el Postgres es directo, así que DIRECT_URL == DATABASE_URL.
+      DIRECT_URL: postgresql://postgres:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DATABASE}
       jwtSecret: ${JWT_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
       REDIS_HOST: redis

@@ -39,4 +39,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
 # El seed NO se ejecuta en el arranque: en prod solo aplicamos migraciones y levantamos la app.
 # El seed base (roles, usuarios, regiones/comunas) se corre manualmente UNA vez al provisionar
 # el entorno:  node dist/prisma/seed.js  (con NODE_ENV=production omite los datos mock).
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/src/main.js"]
+#
+# Las migraciones NO bloquean el arranque: si fallan (p.ej. DIRECT_URL mal configurada o
+# apuntando al pooler pgbouncer) se registra el error y la app levanta igual, en vez de
+# quedar en crash-loop. Revisar el log de arranque ante cualquier error de esquema.
+CMD ["sh", "-c", "npx prisma migrate deploy || echo '[startup] ADVERTENCIA: prisma migrate deploy fallo, revisar DIRECT_URL. La app arranca sin aplicar migraciones.'; node dist/src/main.js"]
