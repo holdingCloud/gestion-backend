@@ -1,5 +1,4 @@
 import { utilities, WinstonModule } from 'nest-winston';
-import { WinstonTransport as AxiomTransport } from '@axiomhq/winston';
 import * as winston from 'winston';
 
 export function createWinstonLogger() {
@@ -15,17 +14,11 @@ export function createWinstonLogger() {
     }),
   ];
 
-  if (process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
-    transports.push(
-      new AxiomTransport({
-        dataset: process.env.AXIOM_DATASET,
-        token: process.env.AXIOM_TOKEN,
-      }),
-    );
-  }
-
+  // 'info' en producción (no 'warn'): con 'warn' se descartan los mensajes de arranque
+  // de Nest y los accesos HTTP del LoggingInterceptor, dejando el contenedor sin ningún
+  // log útil para diagnosticar un despliegue.
   return WinstonModule.createLogger({
-    level: isProduction ? 'warn' : 'debug',
+    level: isProduction ? 'info' : 'debug',
     transports,
   });
 }

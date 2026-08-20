@@ -10,7 +10,11 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
+  // Conexión de la app (puede ir por el pooler de Supabase, puerto 6543).
+  url       = env("DATABASE_URL")
+  // Conexión directa (puerto 5432). Prisma Migrate necesita advisory locks y
+  // prepared statements que pgbouncer en modo transacción no soporta.
+  directUrl = env("DIRECT_URL")
 }
 
 enum typePosition {
@@ -274,10 +278,10 @@ model Company {
 
 model Clients {
   id                       Int                      @id @default(autoincrement())
-  fullname                 String                   @db.VarChar(150)
+  fullname                 String?                  @db.VarChar(150)
   phone                    String                   @db.VarChar(15)
   phone2                   String?                  @db.VarChar(15)
-  email                    String                   @db.VarChar(100)
+  email                    String?                  @db.VarChar(100)
   company                  Company?                 @relation(fields: [companyId], references: [id])
   companyId                Int?
   direccionId              Int?                     @unique

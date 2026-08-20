@@ -47,11 +47,9 @@ export const CreateClientDocs = () =>
           },
         },
         minimo: {
-          summary: 'Cliente mínimo (sin dirección)',
+          summary: 'Cliente mínimo (solo teléfono)',
           value: {
-            fullname: 'Ana Silva',
             phone: '+56987654321',
-            email: 'ana.silva@email.com',
           },
         },
       },

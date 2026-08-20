@@ -10,10 +10,10 @@ export class CompanyRef {
 
 export class ClientEntity {
   id!: number;
-  fullname!: string;
+  fullname!: string | null;
   phone!: string;
   phone2!: string | null;
-  email!: string;
+  email!: string | null;
   companyId!: number | null;
   company?: CompanyRef | null;
   direccionId?: number | null;
