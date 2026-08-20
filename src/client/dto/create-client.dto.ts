@@ -41,9 +41,10 @@ export class DireccionPrincipalDto {
 }
 
 export class CreateClientDto {
+  @IsOptional()
+  @Transform(({ value }) => (typeof value === 'string' && value.trim() === '' ? null : value))
   @IsString()
-  @IsNotEmpty()
-  fullname!: string;
+  fullname?: string | null;
 
   @IsString()
   @IsNotEmpty()
